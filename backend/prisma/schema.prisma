@@ -1,0 +1,154 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Proxy {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  flow        Flow[]
+}
+
+enum ApigeeInstance {
+  X
+  HYBRID
+}
+
+model Flow {
+  id             Int              @id @default(autoincrement())
+  name           String?
+  subject        String?
+  description    String?
+  proxyId        Int
+  instanceApigee ApigeeInstance?
+  domain         String?
+  verb           String?
+  path           String?
+  Proxy          Proxy            @relation(fields: [proxyId], references: [id], onDelete: Cascade)
+  Input          Input[]
+  Output         Output[]
+  SubFlowUsage   SubFlowUsage[]
+  RequestMapping RequestMapping[]
+
+  @@unique([proxyId, verb, path])
+}
+
+enum SourceType {
+  HEADER
+  BODY
+  QUERY
+}
+
+enum ValueType {
+  STRING
+  NUMBER
+  BOOLEAN
+  OBJECT
+  ARRAY
+}
+
+model Input {
+  id         Int        @id @default(autoincrement())
+  name       String
+  source     SourceType
+  type       ValueType
+  validation String?
+  parentId   Int?
+  flowId     Int
+  flow       Flow       @relation(fields: [flowId], references: [id])
+  parent     Input?     @relation("InputToChildren", fields: [parentId], references: [id])
+  children   Input[]    @relation("InputToChildren")
+}
+
+model Output {
+  id         Int        @id @default(autoincrement())
+  name       String
+  source     SourceType
+  validation String?
+  Flow       Flow?      @relation(fields: [flowId], references: [id])
+  flowId     Int?
+}
+
+model SubFlow {
+  id              Int              @id @default(autoincrement())
+  name            String
+  backendId       Int
+  backendPath     String
+  ssl             Boolean
+  backend         Backend          @relation(fields: [backendId], references: [id])
+  subFlowUsages   SubFlowUsage[]
+  requestMappings RequestMapping[]
+  subInputs       SubInput[]
+  subOutputs      SubOutput[]
+}
+
+model SubFlowUsage {
+  id             Int      @id @default(autoincrement())
+  flowId         Int
+  Flow           Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  SubFlow        SubFlow? @relation(fields: [subFlowId], references: [id])
+  isConditionnal Boolean
+  condition      String?
+  subFlowId      Int
+  order          Int
+
+  @@unique([subFlowId, flowId])
+}
+
+model Backend {
+  id        Int         @id @default(autoincrement())
+  name      String?
+  prodUrl   String?
+  noProdUrl String?
+  type      BackendType
+  subFlow   SubFlow[]
+}
+
+enum BackendType {
+  INTERNAL
+  EXTERNAL
+}
+
+model RequestMapping {
+  id        Int        @id @default(autoincrement())
+  apigee    String?
+  backend   String?
+  type      SourceType
+  flow      Flow?      @relation(fields: [flowId], references: [id])
+  flowId    Int?
+  subFlowId Int?
+  subFlow   SubFlow?   @relation(fields: [subFlowId], references: [id])
+}
+
+model SubInput {
+  id         Int        @id @default(autoincrement())
+  name       String
+  source     SourceType
+  type       ValueType
+  subFlowId     Int
+  subFlow   SubFlow?    @relation(fields: [subFlowId], references: [id])
+}
+
+model SubOutput {
+  id        Int         @id @default(autoincrement())
+  name   String?
+  source      SourceType
+  type       ValueType
+  validation String?
+  subFlowId Int?
+  parentId  Int?
+  subFlow   SubFlow?    @relation(fields: [subFlowId], references: [id])
+  parent    SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id])
+  children  SubOutput[] @relation("SubOutputToChildren")
+}
