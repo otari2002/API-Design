@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SubflowusageService } from './subflowusage.service';
-import { CreateSubflowusageDto } from './dto/create-subflowusage.dto';
-import { UpdateSubflowusageDto } from './dto/update-subflowusage.dto';
+import { SubFlowUsageService } from './subflowusage.service';
+import { CreateSubFlowUsageDto } from './dto/create-subflowusage.dto';
+import { UpdateSubFlowUsageDto } from './dto/update-subflowusage.dto';
 
 @Controller('subflowusage')
 export class SubflowusageController {
-  constructor(private readonly subflowusageService: SubflowusageService) {}
+  constructor(private readonly subflowusageService: SubFlowUsageService) {}
 
   @Post()
-  create(@Body() createSubflowusageDto: CreateSubflowusageDto) {
+  create(@Body() createSubflowusageDto: CreateSubFlowUsageDto) {
     return this.subflowusageService.create(createSubflowusageDto);
   }
 
@@ -23,7 +23,7 @@ export class SubflowusageController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSubflowusageDto: UpdateSubflowusageDto) {
+  update(@Param('id') id: string, @Body() updateSubflowusageDto: UpdateSubFlowUsageDto) {
     return this.subflowusageService.update(+id, updateSubflowusageDto);
   }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubInputDto } from './dto/create-subinput.dto';
 import { UpdateSubInputDto } from './dto/update-subinput.dto';
 

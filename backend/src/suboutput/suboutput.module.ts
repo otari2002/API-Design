@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { SuboutputService } from './suboutput.service';
+import { SubOutputService } from './suboutput.service';
 import { SuboutputController } from './suboutput.controller';
 
+import { PrismaModule } from 'src/prisma/prisma.module';
+
 @Module({
+  imports: [PrismaModule], 
   controllers: [SuboutputController],
-  providers: [SuboutputService],
+  providers: [SubOutputService],
 })
 export class SuboutputModule {}

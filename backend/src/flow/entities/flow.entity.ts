@@ -7,15 +7,15 @@ import { ApigeeInstance } from '@prisma/client';
 
 export class Flow {
   id: number;
-  name?: string;
+  name: string;
   subject?: string;
   description?: string;
   proxyId: number;
   instanceApigee?: ApigeeInstance;
-  domain?: string;
-  verb?: string;
-  path?: string;
-  Proxy?: Proxy;
+  domain: string;
+  verb: string;
+  path: string;
+  Proxy: Proxy;
   Input?: Input[];
   Output?: Output[];
   SubFlowUsage?: SubFlowUsage[];

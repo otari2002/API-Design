@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubFlowUsageDto } from './dto/create-subflowusage.dto';
 import { UpdateSubFlowUsageDto } from './dto/update-subflowusage.dto';
 

@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { RequestmappingService } from './requestmapping.service';
-import { CreateRequestmappingDto } from './dto/create-requestmapping.dto';
-import { UpdateRequestmappingDto } from './dto/update-requestmapping.dto';
+import { RequestMappingService } from './requestmapping.service';
+import { CreateRequestMappingDto } from './dto/create-requestmapping.dto';
+import { UpdateRequestMappingDto } from './dto/update-requestmapping.dto';
 
 @Controller('requestmapping')
 export class RequestmappingController {
-  constructor(private readonly requestmappingService: RequestmappingService) {}
+  constructor(private readonly requestmappingService: RequestMappingService) {}
 
   @Post()
-  create(@Body() createRequestmappingDto: CreateRequestmappingDto) {
+  create(@Body() createRequestmappingDto: CreateRequestMappingDto) {
     return this.requestmappingService.create(createRequestmappingDto);
   }
 
@@ -23,7 +23,7 @@ export class RequestmappingController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRequestmappingDto: UpdateRequestmappingDto) {
+  update(@Param('id') id: string, @Body() updateRequestmappingDto: UpdateRequestMappingDto) {
     return this.requestmappingService.update(+id, updateRequestmappingDto);
   }
 

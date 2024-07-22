@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateFlowDto } from './dto/create-flow.dto';
 import { UpdateFlowDto } from './dto/update-flow.dto';
 
@@ -17,6 +17,10 @@ export class FlowService {
 
   findOne(id: number) {
     return this.prisma.flow.findUnique({ where: { id } });
+  }
+
+  async findByProxyId(proxyId: number) {
+    return this.prisma.flow.findMany({ where: { proxyId } });
   }
 
   update(id: number, updateFlowDto: UpdateFlowDto) {

@@ -4,11 +4,11 @@ import { SourceType } from '@prisma/client';
 
 export class RequestMapping {
   id: number;
-  apigee?: string;
-  backend?: string;
+  apigee: string;
+  backend: string;
   type: SourceType;
-  flowId?: number;
-  subFlowId?: number;
+  flowId: number;
+  subFlowId: number;
   flow?: Flow;
   subFlow?: SubFlow;
 }

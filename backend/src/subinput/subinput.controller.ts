@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SubinputService } from './subinput.service';
-import { CreateSubinputDto } from './dto/create-subinput.dto';
-import { UpdateSubinputDto } from './dto/update-subinput.dto';
+import { SubInputService } from './subinput.service';
+import { CreateSubInputDto } from './dto/create-subinput.dto';
+import { UpdateSubInputDto } from './dto/update-subinput.dto';
 
 @Controller('subinput')
 export class SubinputController {
-  constructor(private readonly subinputService: SubinputService) {}
+  constructor(private readonly subinputService: SubInputService) {}
 
   @Post()
-  create(@Body() createSubinputDto: CreateSubinputDto) {
+  create(@Body() createSubinputDto: CreateSubInputDto) {
     return this.subinputService.create(createSubinputDto);
   }
 
@@ -23,7 +23,7 @@ export class SubinputController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSubinputDto: UpdateSubinputDto) {
+  update(@Param('id') id: string, @Body() updateSubinputDto: UpdateSubInputDto) {
     return this.subinputService.update(+id, updateSubinputDto);
   }
 

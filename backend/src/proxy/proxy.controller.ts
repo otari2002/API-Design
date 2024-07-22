@@ -2,10 +2,13 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { ProxyService } from './proxy.service';
 import { CreateProxyDto } from './dto/create-proxy.dto';
 import { UpdateProxyDto } from './dto/update-proxy.dto';
+import { FlowService } from 'src/flow/flow.service';
 
 @Controller('proxy')
 export class ProxyController {
-  constructor(private readonly proxyService: ProxyService) {}
+  constructor(private readonly proxyService: ProxyService,
+  private readonly flowService: FlowService
+  ) {}
 
   @Post()
   create(@Body() createProxyDto: CreateProxyDto) {
@@ -18,8 +21,10 @@ export class ProxyController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.proxyService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const flows = await this.flowService.findByProxyId(+id);
+    const proxy = await this.proxyService.findOne(+id);
+    return { proxy, flows };
   }
 
   @Patch(':id')

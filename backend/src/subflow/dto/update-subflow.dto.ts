@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateSubflowDto } from './create-subflow.dto';
+import { CreateSubFlowDto } from './create-subflow.dto';
 
-export class UpdateSubflowDto extends PartialType(CreateSubflowDto) {}
+export class UpdateSubFlowDto extends PartialType(CreateSubFlowDto) {}

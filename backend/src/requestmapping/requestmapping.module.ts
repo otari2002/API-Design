@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { RequestmappingService } from './requestmapping.service';
+import { RequestMappingService } from './requestmapping.service';
 import { RequestmappingController } from './requestmapping.controller';
 
+import { PrismaModule } from 'src/prisma/prisma.module';
+
 @Module({
+  imports: [PrismaModule], 
   controllers: [RequestmappingController],
-  providers: [RequestmappingService],
+  providers: [RequestMappingService],
 })
 export class RequestmappingModule {}

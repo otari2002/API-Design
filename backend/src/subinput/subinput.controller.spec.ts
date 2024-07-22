@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubinputController } from './subinput.controller';
-import { SubinputService } from './subinput.service';
+import { SubInputService } from './subinput.service';
 
 describe('SubinputController', () => {
   let controller: SubinputController;
@@ -8,7 +8,7 @@ describe('SubinputController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SubinputController],
-      providers: [SubinputService],
+      providers: [SubInputService],
     }).compile();
 
     controller = module.get<SubinputController>(SubinputController);

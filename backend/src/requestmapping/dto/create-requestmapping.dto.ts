@@ -1,9 +1,9 @@
 import { SourceType } from '@prisma/client';
 
 export class CreateRequestMappingDto {
-  apigee?: string;
-  backend?: string;
+  apigee: string;
+  backend: string;
   type: SourceType;
-  flowId?: number;
-  subFlowId?: number;
+  flowId: number;
+  subFlowId: number;
 }

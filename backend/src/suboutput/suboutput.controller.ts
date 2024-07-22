@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SuboutputService } from './suboutput.service';
-import { CreateSuboutputDto } from './dto/create-suboutput.dto';
-import { UpdateSuboutputDto } from './dto/update-suboutput.dto';
+import { SubOutputService } from './suboutput.service';
+import { CreateSubOutputDto } from './dto/create-suboutput.dto';
+import { UpdateSubOutputDto } from './dto/update-suboutput.dto';
 
 @Controller('suboutput')
 export class SuboutputController {
-  constructor(private readonly suboutputService: SuboutputService) {}
+  constructor(private readonly suboutputService: SubOutputService) {}
 
   @Post()
-  create(@Body() createSuboutputDto: CreateSuboutputDto) {
+  create(@Body() createSuboutputDto: CreateSubOutputDto) {
     return this.suboutputService.create(createSuboutputDto);
   }
 
@@ -23,7 +23,7 @@ export class SuboutputController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSuboutputDto: UpdateSuboutputDto) {
+  update(@Param('id') id: string, @Body() updateSuboutputDto: UpdateSubOutputDto) {
     return this.suboutputService.update(+id, updateSuboutputDto);
   }
 

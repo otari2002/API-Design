@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { SubflowusageService } from './subflowusage.service';
+import { SubFlowUsageService } from './subflowusage.service';
 import { SubflowusageController } from './subflowusage.controller';
 
+import { PrismaModule } from 'src/prisma/prisma.module';
+
 @Module({
+  imports: [PrismaModule], 
   controllers: [SubflowusageController],
-  providers: [SubflowusageService],
+  providers: [SubFlowUsageService],
 })
 export class SubflowusageModule {}

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubFlowDto } from './dto/create-subflow.dto';
 import { UpdateSubFlowDto } from './dto/update-subflow.dto';
 
@@ -12,11 +12,20 @@ export class SubFlowService {
   }
 
   findAll() {
-    return this.prisma.subFlow.findMany();
+    return this.prisma.subFlow.findMany({
+      include: {
+        subOutputs: true,
+        subInputs: true,
+      }
+    });
   }
 
   findOne(id: number) {
-    return this.prisma.subFlow.findUnique({ where: { id } });
+    return this.prisma.subFlow.findUnique({ where: { id } ,
+      include: {
+        subOutputs: true,
+        subInputs: true,
+    },});
   }
 
   update(id: number, updateSubFlowDto: UpdateSubFlowDto) {
