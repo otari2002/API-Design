@@ -1,8 +1,5 @@
 import { Backend } from 'src/backend/entities/backend.entity';
-import { SubFlowUsage } from 'src/subflowusage/entities/subflowusage.entity';
-import { RequestMapping } from 'src/requestmapping/entities/requestmapping.entity';
-import { SubInput } from 'src/subinput/entities/subinput.entity';
-import { SubOutput } from 'src/suboutput/entities/suboutput.entity';
+import { RequestMapping, SubFlowUsage, SubInput, SubOutput } from '@prisma/client';
 
 export class SubFlow {
   id: number;
@@ -10,7 +7,7 @@ export class SubFlow {
   backendId: number;
   backendPath: string;
   ssl: boolean;
-  backend?: Backend;
+  backend: Backend;
   subFlowUsages?: SubFlowUsage[];
   requestMappings?: RequestMapping[];
   subInputs?: SubInput[];

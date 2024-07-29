@@ -6,7 +6,10 @@ export class CreateFlowDto {
   description?: string;
   proxyId: number;
   instanceApigee?: ApigeeInstance;
-  domain?: string;
-  verb?: string;
-  path?: string;
+  domain: string;
+  verb: string;
+  path: string;
+  inputs?: Record<'BODY' | 'HEADER' | 'QUERY', Array<any>>;
+  outputs?: Record<'BODY' | 'HEADER', Array<any>>;
+  subflows?: Array<any>;
 }

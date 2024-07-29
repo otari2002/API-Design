@@ -35,11 +35,11 @@ model Flow {
   domain         String?
   verb           String?
   path           String?
-  Proxy          Proxy            @relation(fields: [proxyId], references: [id], onDelete: Cascade)
-  Input          Input[]
-  Output         Output[]
-  SubFlowUsage   SubFlowUsage[]
-  RequestMapping RequestMapping[]
+  proxy          Proxy            @relation(fields: [proxyId], references: [id], onDelete: Cascade)
+  inputs          Input[]
+  outputs         Output[]
+  subFlowUsages   SubFlowUsage[]
+  requestMappings RequestMapping[]
 
   @@unique([proxyId, verb, path])
 }
@@ -75,8 +75,11 @@ model Output {
   id         Int        @id @default(autoincrement())
   name       String
   source     SourceType
+  mapping    String?
   validation String?
-  Flow       Flow?      @relation(fields: [flowId], references: [id])
+  origin     String
+  subOutputSource SourceType?
+  flow       Flow?      @relation(fields: [flowId], references: [id])
   flowId     Int?
 }
 
@@ -96,9 +99,9 @@ model SubFlow {
 model SubFlowUsage {
   id             Int      @id @default(autoincrement())
   flowId         Int
-  Flow           Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  SubFlow        SubFlow? @relation(fields: [subFlowId], references: [id])
-  isConditionnal Boolean
+  flow           Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  subFlow        SubFlow? @relation(fields: [subFlowId], references: [id])
+  isConditional Boolean
   condition      String?
   subFlowId      Int
   order          Int
@@ -121,34 +124,37 @@ enum BackendType {
 }
 
 model RequestMapping {
-  id        Int        @id @default(autoincrement())
-  apigee    String?
-  backend   String?
-  type      SourceType
-  flow      Flow?      @relation(fields: [flowId], references: [id])
-  flowId    Int?
-  subFlowId Int?
-  subFlow   SubFlow?   @relation(fields: [subFlowId], references: [id])
+  id         Int        @id @default(autoincrement())
+  apigee     String?
+  subInputId Int?
+  subInput   SubInput?  @relation(fields: [subInputId], references: [id])
+  source       SourceType
+  origin     String
+  subOutputSource SourceType?
+  flow       Flow?      @relation(fields: [flowId], references: [id])
+  flowId     Int?
+  subFlowId  Int?
+  subFlow    SubFlow?   @relation(fields: [subFlowId], references: [id])
 }
 
 model SubInput {
-  id         Int        @id @default(autoincrement())
-  name       String
-  source     SourceType
-  type       ValueType
-  subFlowId     Int
-  subFlow   SubFlow?    @relation(fields: [subFlowId], references: [id])
+  id             Int              @id @default(autoincrement())
+  name           String
+  source         SourceType
+  type           ValueType
+  subFlowId      Int
+  subFlow        SubFlow?         @relation(fields: [subFlowId], references: [id])
+  requestMapping RequestMapping[]
 }
 
 model SubOutput {
-  id        Int         @id @default(autoincrement())
-  name   String?
-  source      SourceType
+  id         Int         @id @default(autoincrement())
+  name       String?
+  source     SourceType
   type       ValueType
-  validation String?
-  subFlowId Int?
-  parentId  Int?
-  subFlow   SubFlow?    @relation(fields: [subFlowId], references: [id])
-  parent    SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id])
-  children  SubOutput[] @relation("SubOutputToChildren")
+  subFlowId  Int?
+  parentId   Int?
+  subFlow    SubFlow?    @relation(fields: [subFlowId], references: [id])
+  parent     SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id])
+  children   SubOutput[] @relation("SubOutputToChildren")
 }

@@ -1,5 +1,4 @@
-import { BackendType } from '@prisma/client';
-import { SubFlow } from 'src/subflow/entities/subflow.entity';
+import { BackendType, SubFlow } from '@prisma/client';
 
 export class Backend {
   id: number;

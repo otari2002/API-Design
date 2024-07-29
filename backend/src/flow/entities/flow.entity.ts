@@ -1,9 +1,5 @@
 import { Proxy } from 'src/proxy/entities/proxy.entity';
-import { Input } from 'src/input/entities/input.entity';
-import { Output } from 'src/output/entities/output.entity';
-import { SubFlowUsage } from 'src/subflowusage/entities/subflowusage.entity';
-import { RequestMapping } from 'src/requestmapping/entities/requestmapping.entity';
-import { ApigeeInstance } from '@prisma/client';
+import { ApigeeInstance, Input, Output, RequestMapping, SubFlowUsage } from '@prisma/client';
 
 export class Flow {
   id: number;
@@ -15,9 +11,9 @@ export class Flow {
   domain: string;
   verb: string;
   path: string;
-  Proxy: Proxy;
-  Input?: Input[];
-  Output?: Output[];
-  SubFlowUsage?: SubFlowUsage[];
-  RequestMapping?: RequestMapping[];
+  Proxy?: Proxy;
+  inputs?: Input[];
+  outputs?: Output[];
+  subFlowUsages?: SubFlowUsage[];
+  requestMappings?: RequestMapping[];
 }

@@ -1,7 +1,7 @@
 export class CreateSubFlowDto {
-    name: string;
-    backendId: number;
-    backendPath: string;
-    ssl: boolean;
-  }
-  
+  id?: number;
+  name: string;
+  backendId: number;
+  backendPath: string;
+  ssl: boolean;
+}

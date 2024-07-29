@@ -1,8 +1,8 @@
-import { Flow } from 'src/flow/entities/flow.entity';
+import { Flow } from '@prisma/client';
 
 export class Proxy {
   id: number;
   name: string;
   description?: string;
-  flow?: Flow[];
+  flows?: Flow[];
 }
