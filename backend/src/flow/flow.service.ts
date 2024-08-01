@@ -67,6 +67,7 @@ export class FlowService {
     const createdOutput = await this.prisma.output.create({
       data: {
         name: output.name,
+        
         mapping: output.mapping,
         source: output.source,
         origin: output.origin,
