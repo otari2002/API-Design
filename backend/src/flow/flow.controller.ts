@@ -19,7 +19,12 @@ export class FlowController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.flowService.findByProxyId(+id);
+    return this.flowService.findOne(+id);
+  }
+
+  @Get('detailed/:id')
+  findDetailedFlow(@Param('id') id: string) {
+    return this.flowService.findDetailedFlow(+id);
   }
 
   @Patch(':id')

@@ -64,20 +64,6 @@ async function main() {
     //   },
     // });
 
-    // // Create flows for Proxy 2
-    // const flow3 = await prisma.flow.create({
-    //   data: {
-    //     name: "Flow 1 for Proxy 2",
-    //     subject: "Subject 3",
-    //     description: "Description for Flow 1 of Proxy 2",
-    //     proxyId: proxy2.id,
-    //     instanceApigee: "X",
-    //     domain: "domain3.com",
-    //     verb: "POST",
-    //     path: "/path3",
-    //   },
-    // });
-
     // Create subflows
     const subflow1 = await prisma.subFlow.create({
       data: {
@@ -108,10 +94,11 @@ async function main() {
 
     const subInput1 = await prisma.subInput.create({
       data:{
-        name: "input 1",
+        name: "subChild",
         source: "BODY",
         type: "OBJECT",
-        subFlowId: subflow1.id
+        subFlowId: subflow1.id,
+        parentId: subOutput.id
       }
     })
 
@@ -119,7 +106,7 @@ async function main() {
       data:{
         name: "input 3",
         source: "BODY",
-        type: "OBJECT",
+        type: "STRING",
         subFlowId: subflow1.id
       }
     })
@@ -132,23 +119,6 @@ async function main() {
         subFlowId: subflow1.id
       }
     })
-
-    // const proxyflow1 = await prisma.subFlowUsage.create({
-    //   data: {
-    //     isConditional: false,
-    //     order: 1,
-    //     flow: {
-    //       connect: {
-    //         id: flow1.id,
-    //       },
-    //     },
-    //     subFlow: {
-    //       connect: {
-    //         id: subflow1.id,
-    //       },
-    //     },
-    //   },
-    // });
 
     console.log("Database populated successfully!");
   } catch (error) {

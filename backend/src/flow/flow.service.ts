@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateFlowDto } from './dto/create-flow.dto';
+import { CreateFlowDto, InputDto, OutputDto } from './dto/create-flow.dto';
 import { UpdateFlowDto } from './dto/update-flow.dto';
 import { SourceType, SubOutput } from '@prisma/client';
+import { CreateSubFlowDto, RequestMappingDto, SubOutputDto } from './dto/create-subflow.dto';
 @Injectable()
 export class FlowService {
   constructor(private prisma: PrismaService) {}
@@ -47,7 +48,7 @@ export class FlowService {
     return newFlow;
   }
 
-  async createInput(input: any, flowId: number, parentId: number | null = null) {
+  async createInput(input: InputDto, flowId: number, parentId: number | null = null) {
     const createdInput = await this.prisma.input.create({
       data: {
         name: input.name,
@@ -59,11 +60,11 @@ export class FlowService {
       },
     });
 
-    await Promise.all(input.children.map((child: any) => this.createInput(child, flowId, createdInput.id)));
+    await Promise.all(input.children.map((child: InputDto) => this.createInput(child, flowId, createdInput.id)));
     return createdInput;
   }
 
-  async createOutput(output: any, flowId: number) {
+  async createOutput(output: OutputDto, flowId: number) {
     const createdOutput = await this.prisma.output.create({
       data: {
         name: output.name,
@@ -77,9 +78,9 @@ export class FlowService {
     return createdOutput;
   }
 
-  async createSubFlow(flowId: number, subflow: any, index: number) {
-    let subflowId = subflow.id;
-    let subflowCondition = null;
+  async createSubFlow(flowId: number, subflow: CreateSubFlowDto, index: number) {
+    var subflowId = subflow.id;
+    var subflowCondition = null;
 
     if (!subflow.isLoaded) {
       const newSubFlow = await this.prisma.subFlow.create({
@@ -107,8 +108,9 @@ export class FlowService {
       },
     });
     ['BODY', 'HEADER', 'QUERY'].forEach(async (value : SourceType) => {
-      await Promise.all(subflow.requestMappings[value].map(async (mapping: any) => {
-        let subInputId = mapping.inputId;
+      await Promise.all(subflow.requestMappings[value].map(async (mapping: RequestMappingDto) => {
+        if(mapping.apigee === '') return;
+        var subInputId = mapping.inputId;
         if (!subflow.isLoaded) {
           const newSubInput = await this.prisma.subInput.create({
             data: {
@@ -136,7 +138,7 @@ export class FlowService {
     
     if (!subflow.isLoaded) {
       ['BODY', 'HEADER'].forEach(async (value : SourceType) => {
-        await Promise.all(subflow.subOutputs[value].filter((output: any) => output.parentId == null).map(async (output: any) => {
+        await Promise.all(subflow.subOutputs[value].filter((output: SubOutputDto) => output.parentId == null).map(async (output: SubOutputDto) => {
           const newSubOutput = await this.prisma.subOutput.create({
             data: {
               name: output.name,
@@ -145,19 +147,18 @@ export class FlowService {
               subFlow: { connect: { id: subflowId } },
             },
           });
-          console.log(newSubOutput);
           const children = subflow.subOutputs[value].filter((child: any) => child.parentId == output.id);
-          // await Promise.all(children.map(async (child: SubOutput) => {
-          //   await this.prisma.subOutput.create({
-          //     data: {
-          //       name: child.name,
-          //       source: child.source,
-          //       type: child.type,
-          //       parent: { connect: { id: newSubOutput.id } },
-          //       subFlow: { connect: { id: subflowId } },
-          //     },
-          //   });
-          // }));
+          await Promise.all(children.map(async (child: SubOutput) => {
+            await this.prisma.subOutput.create({
+              data: {
+                name: child.name,
+                source: child.source,
+                type: child.type,
+                parent: { connect: { id: newSubOutput.id } },
+                subFlow: { connect: { id: subflowId } },
+              },
+            });
+          }));
         }));
       });
       
@@ -171,6 +172,34 @@ export class FlowService {
   findOne(id: number) {
     return this.prisma.flow.findUnique({ where: { id } });
   }
+
+  async findDetailedFlow(flowId: number) {
+    const loadedFlow = await this.prisma.flow.findFirst({
+      where: {
+          id: flowId,
+      },
+      include: {
+          inputs: true,
+          outputs: true,
+          subFlowUsages: {
+              include: {
+                  subFlow: {
+                      include: {
+                          subInputs: true,
+                          subOutputs: true
+                      },
+                  },
+              },
+          },
+      },
+  });
+  const requestMappingsList = await this.prisma.requestMapping.findMany({
+      where: {
+          flowId: loadedFlow.id,
+      },
+  });
+  return {...loadedFlow, requestMappingsList};
+}
 
   async findByProxyId(proxyId: number) {
     return this.prisma.flow.findMany({ where: { proxyId } });
