@@ -52,10 +52,7 @@ CREATE TABLE "Output" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "source" "SourceType" NOT NULL,
-    "mapping" TEXT,
     "validation" TEXT,
-    "origin" TEXT NOT NULL,
-    "subOutputSource" "SourceType",
     "flowId" INTEGER,
 
     CONSTRAINT "Output_pkey" PRIMARY KEY ("id")
@@ -73,10 +70,33 @@ CREATE TABLE "SubFlow" (
 );
 
 -- CreateTable
+CREATE TABLE "SubInput" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "source" "SourceType" NOT NULL,
+    "type" "ValueType" NOT NULL,
+    "subFlowId" INTEGER,
+
+    CONSTRAINT "SubInput_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SubOutput" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT,
+    "source" "SourceType" NOT NULL,
+    "type" "ValueType" NOT NULL,
+    "subFlowId" INTEGER,
+    "parentId" INTEGER,
+
+    CONSTRAINT "SubOutput_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "SubFlowUsage" (
     "id" SERIAL NOT NULL,
     "flowId" INTEGER NOT NULL,
-    "isConditional" BOOLEAN NOT NULL,
+    "isConditionnal" BOOLEAN NOT NULL,
     "condition" TEXT,
     "subFlowId" INTEGER NOT NULL,
     "order" INTEGER NOT NULL,
@@ -99,37 +119,12 @@ CREATE TABLE "Backend" (
 CREATE TABLE "RequestMapping" (
     "id" SERIAL NOT NULL,
     "apigee" TEXT,
-    "subInputId" INTEGER,
-    "source" "SourceType" NOT NULL,
-    "origin" TEXT NOT NULL,
-    "subOutputSource" "SourceType",
+    "backend" TEXT,
+    "type" "SourceType" NOT NULL,
     "flowId" INTEGER,
     "subFlowId" INTEGER,
 
     CONSTRAINT "RequestMapping_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "SubInput" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "source" "SourceType" NOT NULL,
-    "type" "ValueType" NOT NULL,
-    "subFlowId" INTEGER NOT NULL,
-
-    CONSTRAINT "SubInput_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "SubOutput" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT,
-    "source" "SourceType" NOT NULL,
-    "type" "ValueType" NOT NULL,
-    "subFlowId" INTEGER,
-    "parentId" INTEGER,
-
-    CONSTRAINT "SubOutput_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -154,25 +149,22 @@ ALTER TABLE "Output" ADD CONSTRAINT "Output_flowId_fkey" FOREIGN KEY ("flowId") 
 ALTER TABLE "SubFlow" ADD CONSTRAINT "SubFlow_backendId_fkey" FOREIGN KEY ("backendId") REFERENCES "Backend"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SubFlowUsage" ADD CONSTRAINT "SubFlowUsage_flowId_fkey" FOREIGN KEY ("flowId") REFERENCES "Flow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SubFlowUsage" ADD CONSTRAINT "SubFlowUsage_subFlowId_fkey" FOREIGN KEY ("subFlowId") REFERENCES "SubFlow"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "RequestMapping" ADD CONSTRAINT "RequestMapping_subInputId_fkey" FOREIGN KEY ("subInputId") REFERENCES "SubInput"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "RequestMapping" ADD CONSTRAINT "RequestMapping_flowId_fkey" FOREIGN KEY ("flowId") REFERENCES "Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "RequestMapping" ADD CONSTRAINT "RequestMapping_subFlowId_fkey" FOREIGN KEY ("subFlowId") REFERENCES "SubFlow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SubInput" ADD CONSTRAINT "SubInput_subFlowId_fkey" FOREIGN KEY ("subFlowId") REFERENCES "SubFlow"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SubInput" ADD CONSTRAINT "SubInput_subFlowId_fkey" FOREIGN KEY ("subFlowId") REFERENCES "SubFlow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SubOutput" ADD CONSTRAINT "SubOutput_subFlowId_fkey" FOREIGN KEY ("subFlowId") REFERENCES "SubFlow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SubOutput" ADD CONSTRAINT "SubOutput_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "SubOutput"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SubFlowUsage" ADD CONSTRAINT "SubFlowUsage_flowId_fkey" FOREIGN KEY ("flowId") REFERENCES "Flow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SubFlowUsage" ADD CONSTRAINT "SubFlowUsage_subFlowId_fkey" FOREIGN KEY ("subFlowId") REFERENCES "SubFlow"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RequestMapping" ADD CONSTRAINT "RequestMapping_flowId_fkey" FOREIGN KEY ("flowId") REFERENCES "Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RequestMapping" ADD CONSTRAINT "RequestMapping_subFlowId_fkey" FOREIGN KEY ("subFlowId") REFERENCES "SubFlow"("id") ON DELETE SET NULL ON UPDATE CASCADE;

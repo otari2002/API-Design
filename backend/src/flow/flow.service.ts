@@ -145,19 +145,19 @@ export class FlowService {
               subFlow: { connect: { id: subflowId } },
             },
           });
-  
+          console.log(newSubOutput);
           const children = subflow.subOutputs[value].filter((child: any) => child.parentId == output.id);
-          await Promise.all(children.map(async (child: SubOutput) => {
-            await this.prisma.subOutput.create({
-              data: {
-                name: child.name,
-                source: child.source,
-                type: child.type,
-                parent: { connect: { id: newSubOutput.id } },
-                subFlow: { connect: { id: subflowId } },
-              },
-            });
-          }));
+          // await Promise.all(children.map(async (child: SubOutput) => {
+          //   await this.prisma.subOutput.create({
+          //     data: {
+          //       name: child.name,
+          //       source: child.source,
+          //       type: child.type,
+          //       parent: { connect: { id: newSubOutput.id } },
+          //       subFlow: { connect: { id: subflowId } },
+          //     },
+          //   });
+          // }));
         }));
       });
       
