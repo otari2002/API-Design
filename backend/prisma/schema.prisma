@@ -66,8 +66,8 @@ model Input {
   validation String?
   parentId   Int?
   flowId     Int
-  flow       Flow       @relation(fields: [flowId], references: [id])
-  parent     Input?     @relation("InputToChildren", fields: [parentId], references: [id])
+  flow       Flow       @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  parent     Input?     @relation("InputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
   children   Input[]    @relation("InputToChildren")
 }
 
@@ -79,7 +79,7 @@ model Output {
   validation String?
   origin     String
   subOutputSource SourceType?
-  flow       Flow?      @relation(fields: [flowId], references: [id])
+  flow       Flow?      @relation(fields: [flowId], references: [id], onDelete: Cascade)
   flowId     Int?
 }
 
@@ -100,7 +100,7 @@ model SubFlowUsage {
   id             Int      @id @default(autoincrement())
   flowId         Int
   flow           Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  subFlow        SubFlow? @relation(fields: [subFlowId], references: [id])
+  subFlow        SubFlow? @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
   isConditional Boolean
   condition      String?
   subFlowId      Int
@@ -127,11 +127,11 @@ model RequestMapping {
   id         Int        @id @default(autoincrement())
   apigee     String?
   subInputId Int?
-  subInput   SubInput?  @relation(fields: [subInputId], references: [id])
+  subInput   SubInput?  @relation(fields: [subInputId], references: [id], onDelete: Cascade)
   source       SourceType
   origin     String
   subOutputSource SourceType?
-  flow       Flow?      @relation(fields: [flowId], references: [id])
+  flow       Flow?      @relation(fields: [flowId], references: [id], onDelete: Cascade)
   flowId     Int?
   subFlowId  Int?
   subFlow    SubFlow?   @relation(fields: [subFlowId], references: [id])
@@ -143,7 +143,7 @@ model SubInput {
   source         SourceType
   type           ValueType
   subFlowId      Int
-  subFlow        SubFlow?         @relation(fields: [subFlowId], references: [id])
+  subFlow        SubFlow?         @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
   requestMapping RequestMapping[]
 }
 
@@ -154,7 +154,7 @@ model SubOutput {
   type       ValueType
   subFlowId  Int?
   parentId   Int?
-  subFlow    SubFlow?    @relation(fields: [subFlowId], references: [id])
-  parent     SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id])
+  subFlow    SubFlow?    @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
+  parent     SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
   children   SubOutput[] @relation("SubOutputToChildren")
 }
