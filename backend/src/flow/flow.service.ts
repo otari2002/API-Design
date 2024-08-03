@@ -195,7 +195,7 @@ export class FlowService {
   });
   const requestMappingsList = await this.prisma.requestMapping.findMany({
       where: {
-          flowId: loadedFlow.id,
+          flowId: flowId,
       },
   });
   return {...loadedFlow, requestMappingsList};

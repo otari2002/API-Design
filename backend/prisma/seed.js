@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } =require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
@@ -83,11 +83,28 @@ async function main() {
       },
     });
 
-    const subOutput = await prisma.subOutput.create({
+    const subOutput1 = await prisma.subOutput.create({
       data:{
         name: "SubOutput 1",
         source: "BODY",
         type: "OBJECT",
+        subFlowId: subflow1.id
+      }
+    })
+    const subOutput2 = await prisma.subOutput.create({
+      data:{
+        name: "SubChild",
+        source: "BODY",
+        type: "STRING",
+        parentId: subOutput1.id,
+        subFlowId: subflow1.id
+      }
+    })
+    const subOutput3 = await prisma.subOutput.create({
+      data:{
+        name: "SubOutput 2",
+        source: "BODY",
+        type: "NUMBER",
         subFlowId: subflow1.id
       }
     })
@@ -97,8 +114,7 @@ async function main() {
         name: "subChild",
         source: "BODY",
         type: "OBJECT",
-        subFlowId: subflow1.id,
-        parentId: subOutput.id
+        subFlow: { connect: { id: subflow1.id } },
       }
     })
 
@@ -107,7 +123,7 @@ async function main() {
         name: "input 3",
         source: "BODY",
         type: "STRING",
-        subFlowId: subflow1.id
+        subFlow: { connect: { id: subflow1.id } },
       }
     })
 
@@ -116,7 +132,7 @@ async function main() {
         name: "input 2",
         source: "HEADER",
         type: "OBJECT",
-        subFlowId: subflow1.id
+        subFlow: { connect: { id: subflow1.id } },
       }
     })
 

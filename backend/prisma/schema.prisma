@@ -26,16 +26,16 @@ enum ApigeeInstance {
 }
 
 model Flow {
-  id             Int              @id @default(autoincrement())
-  name           String?
-  subject        String?
-  description    String?
-  proxyId        Int
-  instanceApigee ApigeeInstance?
-  domain         String?
-  verb           String?
-  path           String?
-  proxy          Proxy            @relation(fields: [proxyId], references: [id], onDelete: Cascade)
+  id              Int              @id @default(autoincrement())
+  name            String?
+  subject         String?
+  description     String?
+  proxyId         Int
+  instanceApigee  ApigeeInstance?
+  domain          String?
+  verb            String?
+  path            String?
+  proxy           Proxy            @relation(fields: [proxyId], references: [id], onDelete: Cascade)
   inputs          Input[]
   outputs         Output[]
   subFlowUsages   SubFlowUsage[]
@@ -72,15 +72,15 @@ model Input {
 }
 
 model Output {
-  id         Int        @id @default(autoincrement())
-  name       String
-  source     SourceType
-  mapping    String?
-  validation String?
-  origin     String
+  id              Int         @id @default(autoincrement())
+  name            String
+  source          SourceType
+  mapping         String?
+  validation      String?
+  origin          String
   subOutputSource SourceType?
-  flow       Flow?      @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  flowId     Int?
+  flow            Flow?       @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  flowId          Int?
 }
 
 model SubFlow {
@@ -97,14 +97,14 @@ model SubFlow {
 }
 
 model SubFlowUsage {
-  id             Int      @id @default(autoincrement())
-  flowId         Int
-  flow           Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  subFlow        SubFlow? @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
+  id            Int      @id @default(autoincrement())
+  flowId        Int
+  flow          Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  subFlow       SubFlow? @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
   isConditional Boolean
-  condition      String?
-  subFlowId      Int
-  order          Int
+  condition     String?
+  subFlowId     Int
+  order         Int
 
   @@unique([subFlowId, flowId])
 }
@@ -124,17 +124,17 @@ enum BackendType {
 }
 
 model RequestMapping {
-  id         Int        @id @default(autoincrement())
-  apigee     String?
-  subInputId Int?
-  subInput   SubInput?  @relation(fields: [subInputId], references: [id], onDelete: Cascade)
-  source       SourceType
-  origin     String
+  id              Int         @id @default(autoincrement())
+  apigee          String?
+  subInputId      Int?
+  subInput        SubInput?   @relation(fields: [subInputId], references: [id], onDelete: Cascade)
+  source          SourceType
+  origin          String
   subOutputSource SourceType?
-  flow       Flow?      @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  flowId     Int?
-  subFlowId  Int?
-  subFlow    SubFlow?   @relation(fields: [subFlowId], references: [id])
+  flow            Flow?       @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  flowId          Int?
+  subFlowId       Int?
+  subFlow         SubFlow?    @relation(fields: [subFlowId], references: [id])
 }
 
 model SubInput {
@@ -145,16 +145,19 @@ model SubInput {
   subFlowId      Int
   subFlow        SubFlow?         @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
   requestMapping RequestMapping[]
+  parentId       Int?
+  parent         SubInput?        @relation("SubInputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children       SubInput[]       @relation("SubInputToChildren")
 }
 
 model SubOutput {
-  id         Int         @id @default(autoincrement())
-  name       String?
-  source     SourceType
-  type       ValueType
-  subFlowId  Int?
-  parentId   Int?
-  subFlow    SubFlow?    @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
-  parent     SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children   SubOutput[] @relation("SubOutputToChildren")
+  id        Int         @id @default(autoincrement())
+  name      String?
+  source    SourceType
+  type      ValueType
+  subFlowId Int?
+  parentId  Int?
+  subFlow   SubFlow?    @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
+  parent    SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children  SubOutput[] @relation("SubOutputToChildren")
 }
