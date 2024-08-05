@@ -108,10 +108,26 @@ export class FlowService {
       },
     });
     ['BODY', 'HEADER', 'QUERY'].forEach(async (value : SourceType) => {
-      await Promise.all(subflow.requestMappings[value].map(async (mapping: RequestMappingDto) => {
-        if(mapping.apigee === '') return;
-        var subInputId = mapping.inputId;
-        if (!subflow.isLoaded) {
+      if(subflow.isLoaded){
+        await Promise.all(subflow.requestMappings[value].map(async (mapping: RequestMappingDto) => {
+          if(mapping.apigee === '') return;
+          var subInputId = mapping.inputId;
+          await this.prisma.requestMapping.create({
+            data: {
+              apigee: mapping.apigee,
+              source: value,
+              origin: mapping.origin,
+              subOutputSource: mapping.subOutputSource, 
+              subInput: { connect: { id: subInputId } },
+              flow: { connect: { id: flowId } },
+              subFlow: { connect: { id: subflowId } },
+            },
+          });
+        })); 
+      }else{
+        await Promise.all(subflow.requestMappings[value].filter((rm: RequestMappingDto) => !rm.parentId)
+        .map(async (mapping: RequestMappingDto) => {
+          if(mapping.apigee === '') return;
           const newSubInput = await this.prisma.subInput.create({
             data: {
               name: mapping.backend ? mapping.backend : mapping.apigee,
@@ -120,20 +136,46 @@ export class FlowService {
               subFlow: { connect: { id: subflowId } },
             },
           });
-          subInputId = newSubInput.id;
-        };
-        await this.prisma.requestMapping.create({
-          data: {
-            apigee: mapping.apigee,
-            source: value,
-            origin: mapping.origin,
-            subOutputSource: mapping.subOutputSource, 
-            subInput: { connect: { id: subInputId } },
-            flow: { connect: { id: flowId } },
-            subFlow: { connect: { id: subflowId } },
-          },
-        });
-      }));  
+          if(!mapping.isEmpty){
+            await this.prisma.requestMapping.create({
+              data: {
+                apigee: mapping.apigee,
+                source: value,
+                origin: mapping.origin,
+                subOutputSource: mapping.subOutputSource, 
+                subInput: { connect: { id: newSubInput.id } },
+                flow: { connect: { id: flowId } },
+                subFlow: { connect: { id: subflowId } },
+              },
+            });
+          }else{
+            const children = subflow.requestMappings[value].filter((child: any) => child.parentId == mapping.inputId);
+            children.forEach(async (child: RequestMappingDto) => { 
+              if(child.apigee === '') return;
+              const childInput = await this.prisma.subInput.create({
+                data: {
+                  name: child.backend ? child.backend : child.apigee,
+                  type: child.type,
+                  source: value,
+                  parent: { connect: { id: newSubInput.id } },
+                  subFlow: { connect: { id: subflowId } },
+                },
+              });
+              await this.prisma.requestMapping.create({
+                data: {
+                  apigee: child.apigee,
+                  source: value,
+                  origin: child.origin,
+                  subOutputSource: child.subOutputSource, 
+                  subInput: { connect: { id: childInput.id } },
+                  flow: { connect: { id: flowId } },
+                  subFlow: { connect: { id: subflowId } },
+                },
+              });
+            });
+          }
+        })); 
+      } 
     });
     
     if (!subflow.isLoaded) {
@@ -192,14 +234,32 @@ export class FlowService {
               },
           },
       },
-  });
-  const requestMappingsList = await this.prisma.requestMapping.findMany({
-      where: {
-          flowId: flowId,
+    });
+    const requestMappingsList = await this.prisma.requestMapping.findMany({
+        where: {
+            flowId: flowId,
+        },
+    });
+    return {...loadedFlow, requestMappingsList};
+  }
+
+  async getFlowWithInputs(flowId: number) {
+    const flow = await this.prisma.flow.findUnique({
+      where: { id: flowId },
+      include: {
+        inputs: {
+          include: {
+            children: true,
+          },
+        },
+        outputs: true,
+        subFlowUsages: {
+          include: { subFlow: { include: { requestMappings: true } } },
+        },
       },
-  });
-  return {...loadedFlow, requestMappingsList};
-}
+    });
+    return flow;
+  }
 
   async findByProxyId(proxyId: number) {
     return this.prisma.flow.findMany({ where: { proxyId } });

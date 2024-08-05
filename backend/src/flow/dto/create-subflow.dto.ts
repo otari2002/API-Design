@@ -47,4 +47,6 @@ export  class RequestMappingDto {
   subOutputSource: SourceType;
   inputId: number;
   type: ValueType;
+  isEmpty?: boolean;
+  parentId?: number;
 }

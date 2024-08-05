@@ -18,8 +18,14 @@ export class FlowController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.flowService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    //return this.flowService.findOne(+id);
+    try {
+      return await this.flowService.getFlowWithInputs(+id);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
   }
 
   @Get('detailed/:id')
