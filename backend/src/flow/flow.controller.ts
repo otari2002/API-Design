@@ -1,9 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { FlowService } from './flow.service';
-import { CreateFlowDto } from './dto/create-flow.dto';
-import { UpdateFlowDto } from './dto/update-flow.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from "@nestjs/common";
+import { FlowService } from "./flow.service";
+import { CreateFlowDto } from "./dto/create-flow.dto";
+import { UpdateFlowDto } from "./dto/update-flow.dto";
 
-@Controller('flow')
+@Controller("flow")
 export class FlowController {
   constructor(private readonly flowService: FlowService) {}
 
@@ -17,18 +25,26 @@ export class FlowController {
     return this.flowService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.flowService.findByProxyId(+id);
+  @Get(":id")
+  async findOne(@Param("id") id: string) {
+    // this.flowService.findOne(+id);
+
+    try {
+      return await this.flowService
+        .getFlowWithInputs(+id);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFlowDto: UpdateFlowDto) {
+  @Patch(":id")
+  update(@Param("id") id: string, @Body() updateFlowDto: UpdateFlowDto) {
     return this.flowService.update(+id, updateFlowDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  remove(@Param("id") id: string) {
     return this.flowService.remove(+id);
   }
 }

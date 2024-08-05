@@ -58,7 +58,7 @@ enum ValueType {
   ARRAY
 }
 
-model Input {
+model Input { 
   id         Int        @id @default(autoincrement())
   name       String
   source     SourceType
