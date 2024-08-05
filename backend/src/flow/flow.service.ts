@@ -89,6 +89,7 @@ export class FlowService {
           backendId: subflow.backendId,
           backendPath: subflow.backendPath,
           ssl: subflow.ssl,
+          viaFlow: flowId,
         },
       });
       subflowId = newSubFlow.id;
@@ -112,6 +113,8 @@ export class FlowService {
         await Promise.all(subflow.requestMappings[value].map(async (mapping: RequestMappingDto) => {
           if(mapping.apigee === '') return;
           var subInputId = mapping.inputId;
+          const parent = subflow.requestMappings[value].find((rm: RequestMappingDto) => rm.inputId == mapping.parentId);
+          if(parent && parent.apigee !== '') return;
           await this.prisma.requestMapping.create({
             data: {
               apigee: mapping.apigee,

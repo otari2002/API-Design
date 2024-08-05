@@ -40,6 +40,7 @@ model Flow {
   outputs         Output[]
   subFlowUsages   SubFlowUsage[]
   requestMappings RequestMapping[]
+  subFlowCreated  SubFlow[]
 
   @@unique([proxyId, verb, path])
 }
@@ -84,16 +85,18 @@ model Output {
 }
 
 model SubFlow {
-  id              Int              @id @default(autoincrement())
-  name            String
-  backendId       Int
-  backendPath     String
-  ssl             Boolean
-  backend         Backend          @relation(fields: [backendId], references: [id])
-  subFlowUsages   SubFlowUsage[]
-  requestMappings RequestMapping[]
-  subInputs       SubInput[]
-  subOutputs      SubOutput[]
+  id                 Int              @id @default(autoincrement())
+  name               String
+  backendId          Int
+  backendPath        String
+  ssl                Boolean
+  backend            Backend          @relation(fields: [backendId], references: [id])
+  subFlowUsages      SubFlowUsage[]
+  requestMappings    RequestMapping[]
+  subInputs          SubInput[]
+  subOutputs         SubOutput[]
+  viaFlow Int?
+  flow               Flow?            @relation(fields: [viaFlow], references: [id])
 }
 
 model SubFlowUsage {
