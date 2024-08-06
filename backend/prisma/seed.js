@@ -4,23 +4,23 @@ const prisma = new PrismaClient();
 async function main() {
   try {
     // Create backends
-    const backend1 = await prisma.backend.create({
-      data: {
-        name: "Backend 1",
-        prodUrl: "https://prod.backend1.com",
-        noProdUrl: "https://noprod.backend1.com",
-        type: "INTERNAL",
-      },
-    });
+    // const backend1 = await prisma.backend.create({
+    //   data: {
+    //     name: "Backend 1",
+    //     prodUrl: "https://prod.backend1.com",
+    //     noProdUrl: "https://noprod.backend1.com",
+    //     type: "INTERNAL",
+    //   },
+    // });
 
-    const backend2 = await prisma.backend.create({
-      data: {
-        name: "Backend 2",
-        prodUrl: "https://prod.backend2.com",
-        noProdUrl: "https://noprod.backend2.com",
-        type: "EXTERNAL",
-      },
-    });
+    // const backend2 = await prisma.backend.create({
+    //   data: {
+    //     name: "Backend 2",
+    //     prodUrl: "https://prod.backend2.com",
+    //     noProdUrl: "https://noprod.backend2.com",
+    //     type: "EXTERNAL",
+    //   },
+    // });
 
     // // Create proxies
     // const proxy1 = await prisma.proxy.create({
@@ -64,20 +64,47 @@ async function main() {
     //   },
     // });
 
-    // // Create flows for Proxy 2
-    // const flow3 = await prisma.flow.create({
-    //   data: {
-    //     name: "Flow 1 for Proxy 2",
-    //     subject: "Subject 3",
-    //     description: "Description for Flow 1 of Proxy 2",
-    //     proxyId: proxy2.id,
-    //     instanceApigee: "X",
-    //     domain: "domain3.com",
-    //     verb: "POST",
-    //     path: "/path3",
-    //   },
-    // });
+    const Input = await prisma.input.create({
+      data: {
+        name: "Input 3",
+        source: "BODY",
+        type: "OBJECT",
+        flowId: 2,
+        parentId: null,
+        children: {
+          create: [
+            {
+              name: "Child Input ",
+              source: "BODY",
+              type: "OBJECT",
+              flowId: 2,
+              children: {
+                create: [
+                  {
+                    name: "Nested Child Input ",
+                    source: "BODY",
+                    type: "OBJECT",
+                    flowId: 2,
+                    children: {
+                      create: [
+                        {
+                          name: "second Nested  Input ",
+                          source: "BODY",
+                          type: "OBJECT",
+                          flowId: 2,
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
 
+    console.log("Created Input with children:", Input);
     // // Create subflows
     // const subflow1 = await prisma.subFlow.create({
     //   data: {
@@ -133,34 +160,22 @@ async function main() {
     //   }
     // })
 
-
-    // const HeaderInput = await prisma.input.create({
+    // const proxyflow1 = await prisma.subFlowUsage.create({
     //   data: {
-    //     name: "HEADER input",
-    //     source: "QUERY",
-    //     type: "STRING",
-    //     flowId: 1,
-    //     parentId: null,
-
+    //     isConditional: false,
+    //     order: 1,
+    //     flow: {
+    //       connect: {
+    //         id: flow1.id,
+    //       },
+    //     },
+    //     subFlow: {
+    //       connect: {
+    //         id: subflow1.id,
+    //       },
+    //     },
     //   },
     // });
-
-    const proxyflow1 = await prisma.subFlowUsage.create({
-      data: {
-        isConditional: false,
-        order: 1,
-        flow: {
-          connect: {
-            id: 1,
-          },
-        },
-        subFlow: {
-          connect: {
-            id: 3,
-          },
-        },
-      },
-    });
 
     console.log("Database populated successfully!");
   } catch (error) {

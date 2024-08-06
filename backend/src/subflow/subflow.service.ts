@@ -25,7 +25,8 @@ export class SubFlowService {
       include: {
         subOutputs: true,
         subInputs: true,
-    },});
+    },
+  });
   }
 
   update(id: number, updateSubFlowDto: UpdateSubFlowDto) {

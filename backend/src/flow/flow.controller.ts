@@ -25,17 +25,20 @@ export class FlowController {
     return this.flowService.findAll();
   }
 
-  @Get(":id")
-  async findOne(@Param("id") id: string) {
-    // this.flowService.findOne(+id);
-
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    //return this.flowService.findOne(+id);
     try {
-      return await this.flowService
-        .getFlowWithInputs(+id);
+      return await this.flowService.getFlowWithInputs(+id);
     } catch (e) {
       console.error(e);
       process.exit(1);
     }
+  }
+
+  @Get('detailed/:id')
+  findDetailedFlow(@Param('id') id: string) {
+    return this.flowService.findDetailedFlow(+id);
   }
 
   @Patch(":id")
