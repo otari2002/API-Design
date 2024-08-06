@@ -111,18 +111,9 @@ async function main() {
 
     const subInput1 = await prisma.subInput.create({
       data:{
-        name: "subChild",
+        name: "input 1",
         source: "BODY",
         type: "OBJECT",
-        subFlow: { connect: { id: subflow1.id } },
-      }
-    })
-
-    const subInput3 = await prisma.subInput.create({
-      data:{
-        name: "input 3",
-        source: "BODY",
-        type: "STRING",
         subFlow: { connect: { id: subflow1.id } },
       }
     })
@@ -130,8 +121,18 @@ async function main() {
     const subInput2 = await prisma.subInput.create({
       data:{
         name: "input 2",
-        source: "HEADER",
-        type: "OBJECT",
+        source: "BODY",
+        type: "STRING",
+        subFlow: { connect: { id: subflow1.id } },
+      }
+    })
+
+    const subInput3 = await prisma.subInput.create({
+      data:{
+        name: "subChild",
+        source: "OBJECT",
+        type: "STRING",
+        parentId: subInput1.id,
         subFlow: { connect: { id: subflow1.id } },
       }
     })
