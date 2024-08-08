@@ -10,6 +10,12 @@ export class FlowService {
 
   async create(createFlowDto: CreateFlowDto) {
     const {
+      infoflow,
+      inputs, 
+      outputs, 
+      subflows 
+    } = createFlowDto;
+    const {
       proxyId, 
       name, 
       subject, 
@@ -18,11 +24,7 @@ export class FlowService {
       domain, 
       verb, 
       path, 
-      inputs, 
-      outputs, 
-      subflows 
-    } = createFlowDto;
-
+    } = infoflow;
     const newFlow = await this.prisma.flow.create({
       data: {
         proxyId,
@@ -268,15 +270,70 @@ export class FlowService {
     return this.prisma.flow.findMany({ where: { proxyId } });
   }
 
-  update(id: number, updateFlowDto: UpdateFlowDto) {
-    const { inputs, outputs, subflows, ...updateData } = updateFlowDto;
-    return this.prisma.flow.update({
-      where: { id },
-      data: updateData,
-    });
+  async update(id: number, updateFlowDto: UpdateFlowDto) {
+    const { infoflow, inputs, outputs, subflows} = updateFlowDto;
+    if(infoflow){
+      await this.prisma.flow.update({
+        where: { id },
+        data: {
+          name: infoflow.name,
+          subject: infoflow.subject,
+          description: infoflow.description,
+          instanceApigee: infoflow.instanceApigee,
+          domain: infoflow.domain,
+          verb: infoflow.verb,
+        }
+      });
+    }
+    if(inputs){
+      await Promise.all(inputs['BODY'].map(input => this.updateInput(input, id)));
+      await Promise.all(inputs['HEADER'].map(input => this.updateInput(input, id)));
+      await Promise.all(inputs['QUERY'].map(input => this.updateInput(input, id)));
+    }
+    if(outputs){
+      await Promise.all(outputs['BODY'].map(output => this.updateOutput(output, id)));
+      await Promise.all(outputs['HEADER'].map(output => this.updateOutput(output, id)));
+    }
   }
 
   remove(id: number) {
     return this.prisma.flow.delete({ where: { id } });
+  }
+
+  async updateInput(input: InputDto, flowId: number, parentId: number | null = null) {
+    if(input.inputId){
+      const updatedInput = await this.prisma.input.update({
+        where: { id: input.inputId },
+        data: {
+          name: input.name,
+          type: input.type,
+          validation: input.validation,
+          source: input.source,
+          flowId,
+          parentId,
+        },
+      });
+      await Promise.all(input.children.map((child: InputDto) => this.createInput(child, flowId, updatedInput.id)));
+    }else{
+      await this.createInput(input, flowId, parentId);
+    }
+  }
+
+  async updateOutput(output: OutputDto, flowId: number) {
+    if(output.outputId){
+      await this.prisma.output.update({
+        where: { id: output.outputId },
+        data: {
+          name: output.name,
+          mapping: output.mapping,
+          source: output.source,
+          origin: output.origin,
+          subOutputSource: output.subOutputSource,
+          flowId,
+        },
+      });
+    }else{
+      await this.createOutput(output, flowId);
+    }
   }
 }

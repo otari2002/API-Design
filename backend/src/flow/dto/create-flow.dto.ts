@@ -1,6 +1,13 @@
 import { ApigeeInstance, SourceType, ValueType } from '@prisma/client';
 
 export class CreateFlowDto {
+  infoflow: InfoFlowDTO;
+  inputs?: Record<'BODY' | 'HEADER' | 'QUERY', Array<InputDto>>;
+  outputs?: Record<'BODY' | 'HEADER', Array<OutputDto>>;
+  subflows?: Array<any>;
+}
+
+export class InfoFlowDTO {
   name?: string;
   subject?: string;
   description?: string;
@@ -9,9 +16,6 @@ export class CreateFlowDto {
   domain: string;
   verb: string;
   path: string;
-  inputs?: Record<'BODY' | 'HEADER' | 'QUERY', Array<InputDto>>;
-  outputs?: Record<'BODY' | 'HEADER', Array<OutputDto>>;
-  subflows?: Array<any>;
 }
 
 export class InputDto {
@@ -20,9 +24,11 @@ export class InputDto {
   type: ValueType;
   validation: string;
   children?: Array<InputDto>;
+  inputId?: number;
 }
 
 export class OutputDto {
+  outputId?: number;
   name: string;
   mapping: string;
   source: SourceType;

@@ -16,6 +16,7 @@ export class SubFlowService {
       include: {
         subOutputs: true,
         subInputs: true,
+        backend: true,
       }
     });
   }
