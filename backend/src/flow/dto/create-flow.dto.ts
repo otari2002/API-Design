@@ -24,11 +24,12 @@ export class InputDto {
   type: ValueType;
   validation: string;
   children?: Array<InputDto>;
-  inputId?: number;
 }
 
 export class OutputDto {
   outputId?: number;
+  subOutputId: number;
+  inputId: number;
   name: string;
   mapping: string;
   source: SourceType;

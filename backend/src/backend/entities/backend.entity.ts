@@ -1,4 +1,4 @@
-import { BackendType, SubFlow } from '@prisma/client';
+import { BackendType} from '@prisma/client';
 
 export class Backend {
   id: number;
@@ -6,5 +6,4 @@ export class Backend {
   prodUrl?: string;
   noProdUrl?: string;
   type: BackendType;
-  subFlow?: SubFlow[];
 }
