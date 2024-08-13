@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false
+                }
+            },
+            "previewLimit": 50,
+            "server": "pg-3608fc39-project-658b.c.aivencloud.com",
+            "port": 23642,
+            "driver": "PostgreSQL",
+            "name": "test",
+            "database": "defaultdb",
+            "username": "avnadmin",
+            "password": "AVNS_9G0gINjbCfoADfkaQp0"
+        }
+    ]
+}
