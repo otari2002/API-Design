@@ -37,34 +37,6 @@ async function main() {
       },
     });
 
-    // // Create flows for Proxy 1
-    // const flow1 = await prisma.flow.create({
-    //   data: {
-    //     name: "Flow 1 for Proxy 1",
-    //     subject: "Subject 1",
-    //     description: "Description for Flow 1 of Proxy 1",
-    //     proxyId: proxy1.id,
-    //     instanceApigee: "X",
-    //     domain: "domain1.com",
-    //     verb: "POST",
-    //     path: "/path1",
-    //   },
-    // });
-
-    // const flow2 = await prisma.flow.create({
-    //   data: {
-    //     name: "Flow 2 for Proxy 1",
-    //     subject: "Subject 2",
-    //     description: "Description for Flow 2 of Proxy 1",
-    //     proxyId: proxy1.id,
-    //     instanceApigee: "HYBRID",
-    //     domain: "domain2.com",
-    //     verb: "GET",
-    //     path: "/path2",
-    //   },
-    // });
-
-    // Create subflows
     const subflow1 = await prisma.flow.create({
       data: {
         name: "SubFlow 1",
@@ -87,7 +59,7 @@ async function main() {
 
     const subOutput1 = await prisma.output.create({
       data:{
-        name: "SubOutput 1",
+        name: "userData",
         source: "BODY",
         type: "OBJECT",
         flow: { connect: { id: subflow1.id } },
@@ -95,7 +67,7 @@ async function main() {
     })
     const subOutput2 = await prisma.output.create({
       data:{
-        name: "SubChild",
+        name: "name",
         source: "BODY",
         type: "STRING",
         parent: { connect: { id: subOutput1.id } },
@@ -104,7 +76,7 @@ async function main() {
     })
     const subOutput3 = await prisma.output.create({
       data:{
-        name: "SubOutput 2",
+        name: "score",
         source: "BODY",
         type: "NUMBER",
         flow: { connect: { id: subflow1.id } },
@@ -113,7 +85,7 @@ async function main() {
 
     const subInput1 = await prisma.input.create({
       data:{
-        name: "input 1",
+        name: "user",
         source: "BODY",
         type: "OBJECT",
         flow: { connect: { id: subflow1.id } },
@@ -122,7 +94,7 @@ async function main() {
 
     const subInput2 = await prisma.input.create({
       data:{
-        name: "input 2",
+        name: "type",
         source: "BODY",
         type: "STRING",
         flow: { connect: { id: subflow1.id } },
@@ -131,7 +103,7 @@ async function main() {
 
     const subInput3 = await prisma.input.create({
       data:{
-        name: "subChild",
+        name: "name",
         source: "BODY",
         type: "STRING",
         parent: { connect: { id: subInput1.id } },

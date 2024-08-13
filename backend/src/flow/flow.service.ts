@@ -112,7 +112,11 @@ export class FlowService {
   }
  
   findAll() {
-    return this.prisma.flow.findMany();
+    return this.prisma.flow.findMany({
+      include: {
+        backend: true,
+      },
+    });
   }
 
   findOne(id: number) {

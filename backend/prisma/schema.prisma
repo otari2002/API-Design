@@ -101,7 +101,7 @@ model SubFlowUsage {
   condition     String?
   order         Int
   subFlow       Flow    @relation("SubFlowUsage", fields: [subFlowId], references: [id])
-  flow          Flow    @relation(fields: [flowId], references: [id])
+  flow          Flow    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
   @@unique([subFlowId, flowId])
 }
