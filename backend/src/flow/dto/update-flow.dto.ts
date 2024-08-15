@@ -1,9 +1,10 @@
 import { ApigeeInstance, SourceType, ValueType } from '@prisma/client';
 
-export class UpdateFlowDto {
+export class  UpdateFlowDto {
     infoflow: UpdateInfoFlowDTO;
     inputs?: Record<'BODY' | 'HEADER' | 'QUERY', Array<UpdateInputDto>>;
     outputs?: Record<'BODY' | 'HEADER', Array<UpdateOutputDto>>;
+    subOutputs?: Record<'BODY' | 'HEADER', Array<UpdateOutputDto>>;
     subflows?: Array<any>;
 }
 
@@ -27,13 +28,20 @@ export class UpdateInputDto {
     inputId?: number;
 }
 
+
 export class UpdateOutputDto {
     outputId?: number;
+    inputId?: number;
     name: string;
+    type: ValueType;
     mapping: string;
     source: SourceType;
     validation: string;
     origin: string;
     subOutputSource: SourceType | null;
     children?: Array<UpdateOutputDto>;
+    subOutputId: number;
+
 }
+
+

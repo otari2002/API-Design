@@ -26,6 +26,7 @@ export class InputDto {
   children?: Array<InputDto>;
 }
 
+
 export class OutputDto {
   outputId?: number;
   subOutputId: number;
@@ -37,4 +38,5 @@ export class OutputDto {
   origin: string;
   subOutputSource: SourceType | null;
   children?: Array<OutputDto>;
+
 }

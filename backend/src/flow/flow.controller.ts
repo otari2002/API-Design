@@ -22,10 +22,12 @@ export class FlowController {
     return this.flowService.findDetailedFlow(+id);
   }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateFlowDto: UpdateFlowDto) {
-  //   return this.flowService.update(+id, updateFlowDto);
-  // }
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateFlowDto: UpdateFlowDto) {
+    console.log(updateFlowDto.subOutputs);
+    
+    return this.flowService.update(+id, updateFlowDto);
+  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

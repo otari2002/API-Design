@@ -4,6 +4,7 @@ import { CreateFlowDto, InputDto, OutputDto } from './dto/create-flow.dto';
 import { UpdateFlowDto, UpdateInputDto, UpdateOutputDto } from './dto/update-flow.dto';
 import { SourceType } from '@prisma/client';
 import { SubFlowDto, RequestMappingDto, SubOutputDto } from './dto/create-subflow.dto';
+import { log } from 'console';
 @Injectable()
 export class FlowService {
   constructor(private prisma: PrismaService) {}
@@ -50,6 +51,21 @@ export class FlowService {
     return newFlow;
   }
 
+  // async createInput(input: InputDto, flowId: number, parentId: number | null = null) {
+  //   const createdInput = await this.prisma.input.create({
+  //     data: {
+  //       name: input.name,
+  //       type: input.type,
+  //       validation: input.validation,
+  //       source: input.source,
+  //       flowId,
+  //       parentId,
+  //     },
+  //   });
+
+  //   await Promise.all(input.children.map((child: InputDto) => this.createInput(child, flowId, createdInput.id)));
+  //   return createdInput;
+  // }
   async createInput(input: InputDto, flowId: number, parentId: number | null = null) {
     const createdInput = await this.prisma.input.create({
       data: {
@@ -61,12 +77,16 @@ export class FlowService {
         parentId,
       },
     });
-
-    await Promise.all(input.children.map((child: InputDto) => this.createInput(child, flowId, createdInput.id)));
+  
+    if (Array.isArray(input.children)) {
+      await Promise.all(input.children.map((child: InputDto) => this.createInput(child, flowId, createdInput.id)));
+    }
+  
     return createdInput;
   }
 
-  async createOutput(output: OutputDto, flowId: number) {
+  async createOutput(output: OutputDto, flowId: number, parentId: number | null = null) {
+   
     const createdOutput = await this.prisma.output.create({
       data: {
         name: output.name,
@@ -75,21 +95,53 @@ export class FlowService {
         origin: output.origin,
         subOutputSource: output.subOutputSource,
         flowId,
+        parentId
       },
     });
     return createdOutput;
   }
 
   async createMapping(flowId: number, subflow: SubFlowDto, subflowIndex: number) {
+    const existingMapping = await this.prisma.subFlowUsage.findUnique({
+      where: {
+        subFlowId_flowId: {
+          subFlowId: subflow.id,
+          flowId: flowId,
+        },
+      },
+    });
+
+    if (existingMapping) {
+      // Update the existing entry
+      await this.prisma.subFlowUsage.update({
+        where: {
+          subFlowId_flowId: {
+            subFlowId: subflow.id,
+            flowId: flowId,
+          },
+        },
+        data: {
+          isConditional: false,
+          // isConditional: subflow.isConditional,
+          condition: subflow.condition,
+          order: subflowIndex,
+        },
+      });
+    }
+
+
+else{
     await this.prisma.subFlowUsage.create({
       data: {
-        isConditional: subflow.isConditional,
+        isConditional: false,
+        // isConditional: subflow.isConditional,
         condition: subflow.condition,
         order: subflowIndex,
         flow: { connect: { id: flowId } },
         subFlow: { connect: { id: subflow.id } },
       },
     });
+  }
     ['BODY', 'HEADER', 'QUERY'].forEach(async (value : SourceType) => {
       await Promise.all(subflow.requestMappings[value].map(async (mapping: RequestMappingDto) => {
         if(mapping.apigee === '') return;
@@ -112,11 +164,7 @@ export class FlowService {
   }
  
   findAll() {
-    return this.prisma.flow.findMany({
-      include: {
-        backend: true,
-      },
-    });
+    return this.prisma.flow.findMany({include: {backend: true}});
   }
 
   findOne(id: number) {
@@ -160,71 +208,114 @@ export class FlowService {
     return this.prisma.flow.delete({ where: { id } });
   }
 
-  // async update(id: number, updateFlowDto: UpdateFlowDto) {
-  //   const { infoflow, inputs, outputs, subflows} = updateFlowDto;
-  //   // if(infoflow){
-  //   //   await this.prisma.flow.update({
-  //   //     where: { id },
-  //   //     data: {
-  //   //       name: infoflow.name,
-  //   //       subject: infoflow.subject,
-  //   //       description: infoflow.description,
-  //   //       instanceApigee: infoflow.instanceApigee,
-  //   //       domain: infoflow.domain,
-  //   //       verb: infoflow.verb,
-  //   //     }
-  //   //   });
-  //   // }
-  //   if(inputs){
-  //     var allParentInputs = await this.prisma.input.findMany({ where: { flowId: id, parentId: null } });
-  //     var newInputsIds = [...inputs['BODY'],...inputs['HEADER'], ...inputs['QUERY']].map(input => input.inputId);
-  //     allParentInputs = allParentInputs.filter(input => !newInputsIds.includes(input.id));
+  async update(id: number, updateFlowDto: UpdateFlowDto) {
+
+    
+    const { infoflow, inputs, outputs,subOutputs, subflows} = updateFlowDto;
+    if(infoflow){
+      await this.prisma.flow.update({
+        where: { id },
+        data: {
+          name: infoflow.name,
+          subject: infoflow.subject,
+          description: infoflow.description,
+          instanceApigee: infoflow.instanceApigee,
+          domain: infoflow.domain,
+          verb: infoflow.verb,
+        }
+      });
+    }
+    if(inputs){
+      var allParentInputs = await this.prisma.input.findMany({ where: { flowId: id, parentId: null } });
+      var newInputsIds = [...inputs['BODY'],...inputs['HEADER'], ...inputs['QUERY']].map(input => input.inputId);
+      allParentInputs = allParentInputs.filter(input => !newInputsIds.includes(input.id));
       
-  //     await Promise.all(allParentInputs.map(input => this.prisma.input.delete({ where: { id: input.id } })));
-  //     await Promise.all(inputs['BODY'].map(input => this.updateInput(input, id)));
-  //     await Promise.all(inputs['HEADER'].map(input => this.updateInput(input, id)));
-  //     await Promise.all(inputs['QUERY'].map(input => this.updateInput(input, id)));
-  //   }
-  //   // if(outputs){
-  //   //   await Promise.all(outputs['BODY'].map(output => this.updateOutput(output, id)));
-  //   //   await Promise.all(outputs['HEADER'].map(output => this.updateOutput(output, id)));
-  //   // }
-  // }
+      await Promise.all(allParentInputs.map(input => this.prisma.input.delete({ where: { id: input.id } })));
+      if (Array.isArray(inputs['BODY'])) {
+        await Promise.all(inputs['BODY'].map(input => this.updateInput(input, id)));
+      }
+      if (Array.isArray(inputs['HEADER'])) {
+        await Promise.all(inputs['HEADER'].map(input => this.updateInput(input, id)));
+      }
+      if (Array.isArray(inputs['QUERY'])) {
+        await Promise.all(inputs['QUERY'].map(input => this.updateInput(input, id)));
+      }
+    }
+    if(outputs){
+      await Promise.all(outputs['BODY'].map(output => this.updateOutput(output, id)));
+      await Promise.all(outputs['HEADER'].map(output => this.updateOutput(output, id)));
+    }
+    if(subOutputs){
+      await Promise.all(subOutputs['BODY'].map(subOutput => this.updateOutput(subOutput, id)));
+      await Promise.all(subOutputs['HEADER'].map(subOutput => this.updateOutput(subOutput, id)));
+    }
+    if(subflows){
 
-  // async updateInput(input: UpdateInputDto, flowId: number, parentId: number | null = null) {
-  //   if(input.inputId){
-  //     const updatedInput = await this.prisma.input.update({
-  //       where: { id: input.inputId },
-  //       data: {
-  //         name: input.name,
-  //         type: input.type,
-  //         validation: input.validation,
-  //         source: input.source,
-  //         flowId,
-  //         parentId,
-  //       },
-  //     });
-  //     await Promise.all(input.children.map((child: UpdateInputDto) => this.updateInput(child, flowId, updatedInput.id)));
-  //   }else{
-  //     await this.createInput(input, flowId, parentId);
-  //   }
-  // }
+      subflows.map((subflow, subflowIndex) => this.createMapping(id, subflow, subflowIndex));
+    }
+    return "Flow updated";
+  }
 
-  // async updateOutput(output: UpdateOutputDto, flowId: number) {
-  //   if(output.outputId){
-  //     await this.prisma.output.update({
-  //       where: { id: output.outputId },
-  //       data: {
-  //         name: output.name,
-  //         mapping: output.mapping,
-  //         source: output.source,
-  //         origin: output.origin,
-  //         subOutputSource: output.subOutputSource,
-  //         flowId,
-  //       },
-  //     });
-  //   }else{
-  //     await this.createOutput(output, flowId);
-  //   }
-  // }
+  async updateInput(input: UpdateInputDto, flowId: number, parentId: number | null = null) {
+    if(input.inputId){
+      
+      const updatedInput = await this.prisma.input.update({
+        where: { id: input.inputId },
+        data: {
+          name: input.name,
+          type: input.type,
+          validation: input.validation,
+          source: input.source,
+
+          flowId:flowId,
+          parentId,
+        },
+      });
+      
+
+
+      if (Array.isArray(input.children)) {
+        await Promise.all(input.children.map((child: UpdateInputDto) => this.updateInput(child, flowId, updatedInput.id)));
+      }
+
+      
+    }else{
+      await this.createInput(input, flowId, parentId);
+    }
+  }
+
+  async updateOutput(output: UpdateOutputDto, flowId: number, parentId: number | null = null) {
+    const outputData: OutputDto = {
+      ...output,
+      inputId: output.inputId, 
+      children: output.children?.map(child => ({
+        ...child,
+        inputId: child.inputId, 
+      })) as OutputDto[],
+    };
+    if(output.outputId){
+     const  updatedOutput =await this.prisma.output.update({
+        where: { id: output.outputId },
+        data: {
+          name: output.name,
+          mapping: output.mapping,
+          source: output.source,
+          origin: output.origin, 
+          type: "STRING",
+          subOutputSource: output.subOutputSource,
+          flowId:flowId,
+          parentId:parentId
+        },
+      });
+      
+      if (Array.isArray(output.children)) {
+        
+        await Promise.all(output.children.map((child: UpdateOutputDto) => this.updateOutput(child, flowId, updatedOutput.id)));
+      }
+
+    }else{
+
+      await this.createOutput(outputData, flowId,parentId);
+    }
+  }
 }
