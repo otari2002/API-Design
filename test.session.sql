@@ -1,1 +1,1 @@
-    select  * from "Output"
+    select * from "Output" where "flowId" =3

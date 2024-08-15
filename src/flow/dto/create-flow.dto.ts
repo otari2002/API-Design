@@ -11,6 +11,7 @@ export class InfoFlowDTO {
   name?: string;
   subject?: string;
   description?: string;
+  backendId?: number;
   proxyId: number;
   instanceApigee?: ApigeeInstance;
   domain: string;
@@ -29,14 +30,14 @@ export class InputDto {
 
 export class OutputDto {
   outputId?: number;
-  subOutputId: number;
-  inputId: number;
+  // subOutputId: number;
+  // inputId: number;
   name: string;
   mapping: string;
   source: SourceType;
   validation: string;
+  type: ValueType;
   origin: string;
   subOutputSource: SourceType | null;
   children?: Array<OutputDto>;
-
 }
