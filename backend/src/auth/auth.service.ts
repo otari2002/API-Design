@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "../prisma/prisma.service";
 import { User } from "@prisma/client";
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
@@ -13,13 +14,15 @@ export class AuthService {
   async register(
     email: string,
     password: string
-  ): Promise<{ token: string; expires: Date}> {
+  ): Promise<{ token: string; expires: Date }> {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
-    if(existingUser) {
-        throw new UnauthorizedException("User already exists");
+    if (existingUser) {
+      throw new UnauthorizedException("User already exists");
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await this.prisma.user.create({
-      data: { email, password },
+      data: { email, password: hashedPassword },
     });
 
     const { token, expires } = await this.generateAndStoreToken(user);
@@ -33,7 +36,7 @@ export class AuthService {
   ): Promise<{ token: string; expires: Date }> {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
-    if (!user || user.password !== password) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
@@ -61,8 +64,12 @@ export class AuthService {
     user: User
   ): Promise<{ token: string; expires: Date }> {
     const token = this.jwtService.sign({ userId: user.id });
-    const expires = new Date(Date.now() + 10 * 60 * 60 * 1000);
 
+    const GMToffset = 3600 * 1000;
+    const duration = this.durationToMilliseconds("10m");
+
+    const expires = new Date(Date.now() + GMToffset + duration);
+    
     await this.prisma.session.create({
       data: {
         userId: user.id,
@@ -76,5 +83,27 @@ export class AuthService {
 
   async logout(token: string): Promise<void> {
     await this.prisma.session.delete({ where: { token } });
+  }
+
+  durationToMilliseconds(duration: string) {
+    var result = 0;
+    const values = duration.split("-");
+    values.forEach(x => {
+      const type = x.at(-1);
+      switch (type) {
+        case "s":
+          result += parseInt(x) * 1000;
+          break;
+        case "m":
+          result += parseInt(x) * 1000 * 60;
+          break;
+        case "h":
+          result += parseInt(x) * 1000 * 60 * 60;
+          break;
+        default:
+          return;
+      }
+    });
+    return result;
   }
 }

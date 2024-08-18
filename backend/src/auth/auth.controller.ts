@@ -34,7 +34,7 @@ export class AuthController {
   }
 
   @Get('session')
-  async getSession(@Req() req: Request) {
+  async getSessionUser(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
@@ -43,6 +43,7 @@ export class AuthController {
 
     const token = authHeader.split(' ')[1];
     const user = await this.authService.validateUser(token);
-    return { user };
+    const { password, ...userData } = user;
+    return userData;
   }
 }
