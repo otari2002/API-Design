@@ -17,8 +17,9 @@ export class AuthController {
   async login(
     @Body('email') email: string,
     @Body('password') password: string,
+    @Body('rememberUser') rememberUser?: boolean | null,
   ) {
-    return this.authService.login(email, password);
+    return this.authService.login(email, password, rememberUser);
   }
 
   @Post('logout')
@@ -34,7 +35,7 @@ export class AuthController {
   }
 
   @Get('session')
-  async getSession(@Req() req: Request) {
+  async getSessionUser(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
@@ -43,6 +44,16 @@ export class AuthController {
 
     const token = authHeader.split(' ')[1];
     const user = await this.authService.validateUser(token);
-    return { user };
+    const { password, ...userData } = user;
+    return userData;
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body('email') email: string,
+    @Body('currentPassword') currentPassword: string,
+    @Body('password') password: string,
+  ) {
+    return this.authService.resetPassword(email, currentPassword, password);
   }
 }

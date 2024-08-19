@@ -28,7 +28,7 @@ export class FlowController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateFlowDto: UpdateFlowDto,@Req() req: Request, @Res() res: Response) {
     console.log("updateFlowDto");
-    console.log(updateFlowDto.outputs);
+    console.log(updateFlowDto.subflows);
     
     return this.flowService.update(+id, updateFlowDto,req,res);
   }
