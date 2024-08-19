@@ -80,11 +80,11 @@ export class AuthService {
     }
   }
 
-  async validateUser(token: string): Promise<User> {
+  async validateUser(token: string): Promise<any> {
     const session = await this.prisma.session.findUnique({ where: { token } });
-
-    if (!session || new Date() > session.expires) {
-      throw new UnauthorizedException("Session expired or invalid");
+    const GMToffset = 3600 * 1000;
+    if (!session || new Date(Date.now() + GMToffset) > session.expires) {
+      return null;
     }
 
     const decoded = this.jwtService.verify(token);

@@ -44,6 +44,9 @@ export class AuthController {
 
     const token = authHeader.split(' ')[1];
     const user = await this.authService.validateUser(token);
+    if(!user){
+      throw new UnauthorizedException('Expired Token');
+    }
     const { password, ...userData } = user;
     return userData;
   }

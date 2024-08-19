@@ -17,7 +17,7 @@ export class UpdateInfoFlowDTO {
     domain: string;
     verb: string;
     path: string;
-    backendId: number;
+    backendId?: number;
 }
 
 export class UpdateInputDto {
@@ -33,7 +33,8 @@ export class UpdateInputDto {
 export class UpdateOutputDto {
     outputId?: number;
     name: string;
-    type: ValueType;
+    type: ValueType; 
+
     mapping: string;
     source: SourceType;
     validation: string;
@@ -44,7 +45,7 @@ export class UpdateOutputDto {
 }
 export class UpdateSubOutputDto {
     outputId?: number;
-    inputId?: number;
+    // inputId?: number;
     name: string;
     type: ValueType;
     mapping: string;
