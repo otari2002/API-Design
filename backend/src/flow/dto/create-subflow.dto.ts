@@ -1,19 +1,18 @@
 import { SourceType, ValueType } from "@prisma/client";
 
-export  class CreateSubFlowDto {
-  id?: number;
+export  class SubFlowDto {
+  id: number;
   name: string;
   backendId: number;
   backendPath: string;
   ssl: boolean;
-  isConditional?: boolean;
-  condition?: string;
+  isConditional: boolean;
+  condition: string | null;
   subOutputs?: {
     BODY: SubOutputDto[];
     HEADER: SubOutputDto[];
   };
   subInputs?: SubInputDto[];
-  isLoaded?: boolean;
   requestMappings?: {
     BODY: RequestMappingDto[];
     HEADER: RequestMappingDto[];

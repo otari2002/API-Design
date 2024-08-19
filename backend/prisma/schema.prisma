@@ -23,22 +23,27 @@ model Proxy {
 enum ApigeeInstance {
   X
   HYBRID
+  NONE
 }
 
 model Flow {
   id              Int              @id @default(autoincrement())
-  name            String?
+  name            String
   subject         String?
   description     String?
-  proxyId         Int
+  proxyId         Int?
   instanceApigee  ApigeeInstance?
   domain          String?
-  verb            String?
-  path            String?
-  proxy           Proxy            @relation(fields: [proxyId], references: [id], onDelete: Cascade)
+  verb            String
+  path            String
+  backendId       Int?
+  ssl             Boolean?
+  backend         Backend?         @relation(fields: [backendId], references: [id])
+  proxy           Proxy?           @relation(fields: [proxyId], references: [id], onDelete: Cascade)
   inputs          Input[]
   outputs         Output[]
   subFlowUsages   SubFlowUsage[]
+  usedIn          SubFlowUsage[]   @relation("SubFlowUsage")
   requestMappings RequestMapping[]
 
   @@unique([proxyId, verb, path])
@@ -58,53 +63,46 @@ enum ValueType {
   ARRAY
 }
 
-model Input { 
-  id         Int        @id @default(autoincrement())
-  name       String
-  source     SourceType
-  type       ValueType
-  validation String?
-  parentId   Int?
-  flowId     Int
-  flow       Flow       @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  parent     Input?     @relation("InputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children   Input[]    @relation("InputToChildren")
+model Input {
+  id             Int              @id @default(autoincrement())
+  name           String
+  source         SourceType
+  type           ValueType
+  validation     String?
+  parentId       Int?
+  flowId         Int
+  flow           Flow             @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  parent         Input?           @relation("InputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children       Input[]          @relation("InputToChildren")
+  RequestMapping RequestMapping[]
 }
 
 model Output {
-  id              Int         @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   name            String
   source          SourceType
+  type            ValueType?
   mapping         String?
   validation      String?
-  origin          String
+  origin          String?
   subOutputSource SourceType?
+  parentId        Int?
+  parent          Output?     @relation("OutputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children        Output[]    @relation("OutputToChildren")
   flow            Flow?       @relation(fields: [flowId], references: [id], onDelete: Cascade)
   flowId          Int?
 }
 
-model SubFlow {
-  id              Int              @id @default(autoincrement())
-  name            String
-  backendId       Int
-  backendPath     String
-  ssl             Boolean
-  backend         Backend          @relation(fields: [backendId], references: [id])
-  subFlowUsages   SubFlowUsage[]
-  requestMappings RequestMapping[]
-  subInputs       SubInput[]
-  subOutputs      SubOutput[]
-}
-
 model SubFlowUsage {
-  id            Int      @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   flowId        Int
-  flow          Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  subFlow       SubFlow? @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
+  subFlowId     Int
   isConditional Boolean
   condition     String?
-  subFlowId     Int
   order         Int
+  subFlow       Flow    @relation("SubFlowUsage", fields: [subFlowId], references: [id])
+  flow          Flow    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
   @@unique([subFlowId, flowId])
 }
@@ -115,7 +113,7 @@ model Backend {
   prodUrl   String?
   noProdUrl String?
   type      BackendType
-  subFlow   SubFlow[]
+  flows     Flow[]
 }
 
 enum BackendType {
@@ -126,38 +124,30 @@ enum BackendType {
 model RequestMapping {
   id              Int         @id @default(autoincrement())
   apigee          String?
-  subInputId      Int?
-  subInput        SubInput?   @relation(fields: [subInputId], references: [id], onDelete: Cascade)
+  subInputId      Int
   source          SourceType
   origin          String
   subOutputSource SourceType?
-  flow            Flow?       @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  flowId          Int?
-  subFlowId       Int?
-  subFlow         SubFlow?    @relation(fields: [subFlowId], references: [id])
+  flowId          Int
+  subFlowId       Int
+  subInput        Input       @relation(fields: [subInputId], references: [id])
+  flow            Flow        @relation(fields: [flowId], references: [id])
 }
 
-model SubInput {
-  id             Int              @id @default(autoincrement())
-  name           String
-  source         SourceType
-  type           ValueType
-  subFlowId      Int
-  subFlow        SubFlow?         @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
-  requestMapping RequestMapping[]
-  parentId       Int?
-  parent         SubInput?        @relation("SubInputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children       SubInput[]       @relation("SubInputToChildren")
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  sessions  Session[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model SubOutput {
-  id        Int         @id @default(autoincrement())
-  name      String?
-  source    SourceType
-  type      ValueType
-  subFlowId Int?
-  parentId  Int?
-  subFlow   SubFlow?    @relation(fields: [subFlowId], references: [id], onDelete: Cascade)
-  parent    SubOutput?  @relation("SubOutputToChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children  SubOutput[] @relation("SubOutputToChildren")
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
 }
