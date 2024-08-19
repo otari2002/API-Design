@@ -17,8 +17,9 @@ export class AuthController {
   async login(
     @Body('email') email: string,
     @Body('password') password: string,
+    @Body('rememberUser') rememberUser?: boolean | null,
   ) {
-    return this.authService.login(email, password);
+    return this.authService.login(email, password, rememberUser);
   }
 
   @Post('logout')
@@ -45,5 +46,14 @@ export class AuthController {
     const user = await this.authService.validateUser(token);
     const { password, ...userData } = user;
     return userData;
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body('email') email: string,
+    @Body('currentPassword') currentPassword: string,
+    @Body('password') password: string,
+  ) {
+    return this.authService.resetPassword(email, currentPassword, password);
   }
 }
