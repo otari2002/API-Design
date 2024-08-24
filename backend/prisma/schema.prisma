@@ -139,6 +139,7 @@ model User {
   email     String   @unique
   password  String
   sessions  Session[]
+  passwordResetToken PasswordResetToken?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -150,4 +151,13 @@ model Session {
   token     String   @unique
   expires   DateTime
   createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  expires   DateTime
+  userId    String       @unique
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
 }

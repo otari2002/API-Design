@@ -3,12 +3,15 @@ import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "../prisma/prisma.service";
 import { User } from "@prisma/client";
 import * as bcrypt from 'bcryptjs';
+import { SendEmailDto } from "src/mailer/dto/send_email_dto";
+import { MailerService } from "src/mailer/mailer.service";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService
   ) {}
 
   async register(
@@ -57,7 +60,7 @@ export class AuthService {
     }
   }
 
-  async resetPassword(
+  async editPassword(
     email: string,
     currentPassword: string,
     password: string
@@ -76,10 +79,94 @@ export class AuthService {
       });
       return { message: "Password updated successfully" };
     } catch (error) {
-      return { error: error, message: "Failed to reset password" };
+      return { error: error, message: "Failed to edit password" };
     }
   }
 
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    const existingRequest = await this.prisma.passwordResetToken.findFirst({
+      where: { userId: user.id },
+    });
+    const GMToffset = 3600 * 1000;
+    if (!user) {
+      throw new UnauthorizedException("Email not found");
+    }
+    if(existingRequest){
+      if(existingRequest.expires > new Date(Date.now() + GMToffset) ){
+        throw new UnauthorizedException("Password reset request already sent");
+      }else{
+        await this.prisma.passwordResetToken.delete({ where: { id: existingRequest.id } });
+      }
+    }
+  
+    const duration = this.durationToMilliseconds("10m");
+    const { token, expires } = await this.generateAndStoreToken(user, duration, "password");
+  
+    const expirationTime = new Date(expires).toLocaleString();
+  
+    const resetLink = `http://localhost:3000/auth/reset-password?token=${token}`;
+
+  const dto: SendEmailDto = {
+    recipient: { name: '', address: user.email },
+    subject: 'Password Reset Request',
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+        <h2 style="text-align: center; color: #4CAF50;">Password Reset</h2>
+        <p style="font-size: 16px; color: #333;">Hello, {{name}}</p>
+        <p style="font-size: 16px; color: #333;">
+          We received a request to reset your password. Please click the link below to reset your password.
+        </p>
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${resetLink}" style="display: inline-block; font-size: 18px; color: #fff; background-color: #4CAF50; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Reset Your Password
+          </a>
+        </div>
+        <p style="font-size: 16px; color: #333;">
+          This link will expire on <strong>${expirationTime}</strong>.
+        </p>
+        <p style="font-size: 16px; color: #333;">
+          If you did not request a password reset, please ignore this email.
+        </p>
+        <p style="font-size: 16px; color: #333;">
+          Best regards,<br/>
+          The Team
+        </p>
+      </div>
+    `,
+      placeholders: { name: user.email },
+    };
+  
+    await this.sendMail(dto);
+  }
+
+  async validateResetPasswordToken(token: string): Promise<{ message?: string }> {
+    const resetToken = await this.prisma.passwordResetToken.findUnique({ where: { token } });
+    const GMToffset = 3600 * 1000;
+    if (!resetToken || new Date(Date.now() + GMToffset) > resetToken.expires) {
+      throw new UnauthorizedException("Invalid or expired token");
+    }
+    return { message: "Token is valid" };
+  }
+
+  async resetPassword(token: string, password: string): Promise<{ message: string, error?: string }> {
+    const resetToken = await this.prisma.passwordResetToken.findUnique({ where: { token } });
+    const GMToffset = 3600 * 1000;
+    if (!resetToken || new Date(Date.now() + GMToffset) > resetToken.expires) {
+      throw new UnauthorizedException("Invalid or expired token");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await this.prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hashedPassword },
+    });
+
+    await this.prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
+
+    return { message: "Password reset successfully" };
+  }
+  
   async validateUser(token: string): Promise<any> {
     const session = await this.prisma.session.findUnique({ where: { token } });
     const GMToffset = 3600 * 1000;
@@ -96,21 +183,35 @@ export class AuthService {
   }
 
   async generateAndStoreToken(
-    user: User, duration: number
+    user: User, duration: number, type: string  = "session"
   ): Promise<{ token: string; expires: Date }> {
     const token = this.jwtService.sign({ userId: user.id });
 
     const GMToffset = 3600 * 1000;
-
     const expires = new Date(Date.now() + GMToffset + duration);
     
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        token,
-        expires,
-      },
-    });
+    switch (type) {
+      case "password":
+        await this.prisma.passwordResetToken.create({
+          data: {
+            userId: user.id,
+            token,
+            expires,
+          },
+        });
+        break;
+      case "session":
+        await this.prisma.session.create({
+          data: {
+            userId: user.id,
+            token,
+            expires,
+          },
+        });
+        break;
+      default:
+        return { token : null, expires: null };
+    }
 
     return { token, expires };
   }
@@ -139,5 +240,9 @@ export class AuthService {
       }
     });
     return result;
+  }
+
+  async sendMail(dto: SendEmailDto): Promise<any> {
+    return await this.mailerService.sendMail(dto);
   }
 }

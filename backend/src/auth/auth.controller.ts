@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Req, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -51,12 +51,31 @@ export class AuthController {
     return userData;
   }
 
-  @Post('reset-password')
-  async resetPassword(
+  @Post('edit-password')
+  async editPassword(
     @Body('email') email: string,
     @Body('currentPassword') currentPassword: string,
     @Body('password') password: string,
   ) {
-    return this.authService.resetPassword(email, currentPassword, password);
+    return this.authService.editPassword(email, currentPassword, password);
+  }
+
+  @Post('reset-password/email')
+  async requestResetPassword(@Body('email') email: string) {
+    await this.authService.sendPasswordResetEmail(email);
+    return { message: 'Password reset email sent successfully' };
+  }
+
+  @Post('reset-password/validate')
+  async validateResetPasswordToken(@Body('token') token: string) {
+    return this.authService.validateResetPasswordToken(token);
+  }
+
+  @Post('reset-password/confirm')
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('password') password: string,
+  ) {
+    return this.authService.resetPassword(token, password);
   }
 }
