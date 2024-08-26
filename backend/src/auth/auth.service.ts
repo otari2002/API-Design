@@ -21,7 +21,7 @@ export class AuthService {
     try{
       const existingUser = await this.prisma.user.findUnique({ where: { email } });
       if (existingUser) {
-        throw new UnauthorizedException("Email already exists");
+        throw new UnauthorizedException();
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,6 +33,9 @@ export class AuthService {
         message: "User registered successfully"
       }
     }catch(error){
+      if(error instanceof UnauthorizedException){
+        return { error: error.message, message: "Email already exists" };
+      }
       return { error: error, message: "Failed to register" };
     }
 
@@ -43,19 +46,21 @@ export class AuthService {
     password: string,
     rememberUser: boolean | null
   ): Promise<{ token: string; expires: Date, message?: string }> {
-    try{
+    try {
       const user = await this.prisma.user.findUnique({ where: { email } });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-    const duration = rememberUser ? 
-      this.durationToMilliseconds("24h") * 30 : this.durationToMilliseconds("10m");
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        throw new UnauthorizedException();
+      }
+      const duration = rememberUser ? this.durationToMilliseconds("24h") * 30 : this.durationToMilliseconds("10m");
 
-    const { token, expires } = await this.generateAndStoreToken(user, duration);
+      const { token, expires } = await this.generateAndStoreToken(user, duration);
 
-    return { token, expires };
-    }catch(error){
+      return { token, expires };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        return { token: null, expires: null, message: "Invalid credentials" };
+      }
       return { token: null, expires: null };
     }
   }
