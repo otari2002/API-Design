@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ProxyService } from './proxy.service';
 import { CreateProxyDto } from './dto/create-proxy.dto';
 import { UpdateProxyDto } from './dto/update-proxy.dto';
@@ -21,8 +21,11 @@ export class ProxyController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const flows = await this.flowService.findByProxyId(+id);
+  async findOne(
+    @Param('id') id: string,
+    @Query('subject') subject: string = null
+  ) {
+    const flows = await this.flowService.findByProxyId(+id, subject);
     const proxy = await this.proxyService.findOne(+id);
     return { proxy, flows };
   }

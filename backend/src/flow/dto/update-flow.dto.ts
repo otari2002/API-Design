@@ -18,6 +18,7 @@ export class UpdateInfoFlowDTO {
     verb: string;
     path: string;
     backendId?: number;
+    ssl: boolean;
 }
 
 export class UpdateInputDto {

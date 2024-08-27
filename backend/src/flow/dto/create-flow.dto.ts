@@ -17,6 +17,7 @@ export class InfoFlowDTO {
   domain: string;
   verb: string;
   path: string;
+  ssl: boolean;
 }
 
 export class InputDto {

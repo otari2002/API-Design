@@ -14,13 +14,13 @@ export class FlowController {
     
     return this.flowService.create(createFlowDto,req,res);
   }
-
+  
   @Get()
   findAll() {
     return this.flowService.findAll();
   }
 
-  @Get('detailed/:id')
+  @Get(':id')
   findDetailedFlow(@Param('id') id: string) {
     return this.flowService.findDetailedFlow(+id);
   }

@@ -32,6 +32,7 @@ export class FlowService {
       verb,
       backendId,
       path,
+      ssl
     } = infoflow;
 
     const existingFlow = await this.prisma.flow.findFirst({
@@ -44,6 +45,7 @@ export class FlowService {
 
     if (existingFlow) {
       return res.status(400).json({
+        status: "error",
         message: "A flow with the same domain, path, and name already exists.",
       });
     }
@@ -55,21 +57,24 @@ export class FlowService {
         subject,
         description,
         instanceApigee,
-        domain,
+        domain: instanceApigee === "X" || instanceApigee === "HYBRID"
+          ? infoflow.domain : null,
         verb,
         path,
-        backendId:
-          instanceApigee === "X" || instanceApigee === "HYBRID"
-            ? Number(backendId)
-            : null,
+        backendId: instanceApigee === "X" || instanceApigee === "HYBRID"
+          ? null : Number(backendId),
+        ssl: instanceApigee === "X" || instanceApigee === "HYBRID"
+          ? null : ssl,
       },
     });
+
+    const subflowsToMap = instanceApigee === "X" || instanceApigee === "HYBRID" ?  subflows : []; 
 
     await Promise.all([
       ...inputs["BODY"].map((input) => this.createInput(input, newFlow.id)),
       ...inputs["HEADER"].map((input) => this.createInput(input, newFlow.id)),
       ...inputs["QUERY"].map((input) => this.createInput(input, newFlow.id)),
-      ...subflows.map((subflow, subflowIndex) =>
+      subflowsToMap.map((subflow, subflowIndex) =>
         this.createMapping(newFlow.id, subflow, subflowIndex)
       ),
       ...outputs["BODY"].map((output) => this.createOutput(output, newFlow.id)),
@@ -78,7 +83,11 @@ export class FlowService {
       ),
     ]);
 
-    return res.status(200).json(newFlow);
+    return res.status(200).json({
+      status: "success",
+      message: "Flow created successfully.",
+      flow: newFlow
+    });
   }
 
   // async createInput(input: InputDto, flowId: number, parentId: number | null = null) {
@@ -267,8 +276,12 @@ export class FlowService {
     return { ...loadedFlow, requestMappingsList };
   }
 
-  async findByProxyId(proxyId: number) {
-    return this.prisma.flow.findMany({ where: { proxyId } });
+  async findByProxyId(proxyId: number, subject: string) {
+    if(subject){
+      return this.prisma.flow.findMany({ where: { proxyId, subject }, include: { backend: true } });
+    }else{
+      return this.prisma.flow.findMany({ where: { proxyId }, include: { backend: true } });
+    }
   }
 
   remove(id: number) {
@@ -283,7 +296,7 @@ export class FlowService {
   ) {
     const { infoflow, inputs, outputs, subOutputs, subflows } = updateFlowDto;
 
-    const existingFlow = await this.prisma.flow.findFirst({
+    const existingApigeeFlow = await this.prisma.flow.findFirst({
       where: {
         id: { not: id },
         domain: infoflow.domain,
@@ -292,8 +305,25 @@ export class FlowService {
       },
     });
 
-    if (existingFlow) {
+    if (existingApigeeFlow) {
       return res.status(400).json({
+        status: "error",
+        message: "A flow with the same domain, path, and name already exists.",
+      });
+    }
+
+    const existingElementaryFlow = await this.prisma.flow.findFirst({
+      where: {
+        id: { not: id },
+        backendId: infoflow.backendId,
+        path: infoflow.path,
+        name: infoflow.name,
+      },
+    });
+
+    if (existingElementaryFlow) {
+      return res.status(400).json({
+        status: "error",
         message: "A flow with the same domain, path, and name already exists.",
       });
     }
@@ -306,10 +336,14 @@ export class FlowService {
           subject: infoflow.subject,
           description: infoflow.description,
           instanceApigee: infoflow.instanceApigee,
-          domain: infoflow.domain,
+          domain: infoflow.instanceApigee === "X" || infoflow.instanceApigee === "HYBRID"
+          ? infoflow.domain : null,
           verb: infoflow.verb,
-
-          backendId: infoflow.backendId ? Number(infoflow.backendId) : null,
+          path: infoflow.path,
+          backendId: infoflow.instanceApigee === "X" || infoflow.instanceApigee === "HYBRID"
+            ? null : Number(infoflow.backendId),
+          ssl: infoflow.instanceApigee === "X" || infoflow.instanceApigee === "HYBRID"
+            ? null : infoflow.ssl,
         },
       });
     }
@@ -426,6 +460,7 @@ export class FlowService {
     }
 
     return res.status(201).json({
+      status: "success",
       message: "Flow updated successfully.",
     });
   }
@@ -443,7 +478,6 @@ export class FlowService {
           type: input.type,
           validation: input.validation,
           source: input.source,
-
           flowId: flowId,
           parentId,
         },
@@ -472,7 +506,6 @@ export class FlowService {
           name: output.name,
           type: output.type,
           source: output.source,
-
           flowId: flowId,
           parentId,
         },
