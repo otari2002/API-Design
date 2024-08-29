@@ -45,8 +45,6 @@ model Flow {
   subFlowUsages   SubFlowUsage[]
   usedIn          SubFlowUsage[]   @relation("SubFlowUsage")
   requestMappings RequestMapping[]
-
-  @@unique([proxyId, verb, path])
 }
 
 enum SourceType {
@@ -101,7 +99,7 @@ model SubFlowUsage {
   isConditional Boolean
   condition     String?
   order         Int
-  subFlow       Flow    @relation("SubFlowUsage", fields: [subFlowId], references: [id])
+  subFlow       Flow    @relation("SubFlowUsage", fields: [subFlowId], references: [id], onDelete: Cascade)
   flow          Flow    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
   @@unique([subFlowId, flowId])
@@ -131,7 +129,7 @@ model RequestMapping {
   flowId          Int
   subFlowId       Int
   subInput        Input       @relation(fields: [subInputId], references: [id])
-  flow            Flow        @relation(fields: [flowId], references: [id])
+  flow            Flow        @relation(fields: [flowId], references: [id], onDelete: Cascade)
 }
 
 model User {

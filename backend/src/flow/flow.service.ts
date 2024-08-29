@@ -10,7 +10,6 @@ import { SourceType } from "@prisma/client";
 import {
   SubFlowDto,
   RequestMappingDto,
-  SubOutputDto,
 } from "./dto/create-subflow.dto";
 import { Request, Response } from "express";
 
@@ -21,7 +20,7 @@ export class FlowService {
   async create(createFlowDto: CreateFlowDto, req: Request, res: Response) {
     console.log("createFlowDto", createFlowDto);
 
-    const { infoflow, inputs, outputs, subflows } = createFlowDto;
+    const { infoflow, inputs, outputs, subflows, subOutputs } = createFlowDto;
     const {
       proxyId,
       name,
@@ -34,19 +33,57 @@ export class FlowService {
       path,
       ssl
     } = infoflow;
+    const proxyExists = await this.prisma.proxy.findUnique({
+      where: { id: proxyId },
+    });
+    console.log("proxyId", proxyId);
+    if (!proxyExists) {
+      return res.json({
+        status: "error",
+        message: "The provided proxyId does not exist.",
+      });
+    }
+    
     const isApigeeFlow = instanceApigee === "X" || instanceApigee === "HYBRID";
-    const existingFlow = await this.prisma.flow.findFirst({
+    if(isApigeeFlow){
+      const existingApigeeFlow = await this.prisma.flow.findFirst({
+        where: {
+          domain: domain,
+          path: path,
+        },
+      });
+      if (existingApigeeFlow) {
+        return res.json({
+          status: "error",
+          message: "A flow with the same domain and path already exists.",
+        });
+      }
+    }else{
+      console.log(Number(backendId), path, name);
+      const existingElementaryFlow = await this.prisma.flow.findFirst({
+        where: {
+          backendId: Number(backendId),
+          path: path,
+        },
+      });
+  
+      if (existingElementaryFlow) {
+        return res.json({
+          status: "error",
+          message: "A flow with the same backend and path already exists.",
+        });
+      }
+    }
+
+    const existingFlowWithSameName = await this.prisma.flow.findFirst({
       where: {
-        domain,
-        path,
-        name,
+        name: name,
       },
     });
-
-    if (existingFlow) {
-      return res.status(400).json({
+    if (existingFlowWithSameName) {
+      return res.json({
         status: "error",
-        message: "A flow with the same domain, path, and name already exists.",
+        message: "A flow with the same name already exists.",
       });
     }
 
@@ -57,7 +94,7 @@ export class FlowService {
         subject,
         description,
         instanceApigee,
-        domain: isApigeeFlow ? infoflow.domain : null,
+        domain: isApigeeFlow ? domain : null,
         verb,
         path,
         backendId: isApigeeFlow ? null : Number(backendId),
@@ -77,6 +114,20 @@ export class FlowService {
       ...outputs["BODY"].map((output) => this.createOutput(output, newFlow.id)),
       ...outputs["HEADER"].map((output) =>
         this.createOutput(output, newFlow.id)
+      ),
+      ...subOutputs["BODY"].map((subOutput) =>
+        this.createOutput(subOutput, newFlow.id)
+      ),
+      ...subOutputs["HEADER"].map(async (subOutput) => {
+        const newSubOutput = await this.createOutput(subOutput, newFlow.id);
+        if (Array.isArray(subOutput.children)) {
+          await Promise.all(
+            subOutput.children.map((child: OutputDto) =>
+              this.updateOutput(child, newFlow.id, newSubOutput.id)
+            )
+          );
+        }
+      }
       ),
     ]);
 
@@ -298,30 +349,42 @@ export class FlowService {
         id: { not: id },
         domain: infoflow.domain,
         path: infoflow.path,
-        name: infoflow.name,
       },
     });
 
     if (existingApigeeFlow) {
-      return res.status(400).json({
+      return res.json({
         status: "error",
-        message: "A flow with the same domain, path, and name already exists.",
+        message: "A flow with the same domain and path already exists.",
       });
     }
 
     const existingElementaryFlow = await this.prisma.flow.findFirst({
       where: {
         id: { not: id },
-        backendId: infoflow.backendId,
+        backendId: Number(infoflow.backendId),
         path: infoflow.path,
-        name: infoflow.name,
       },
     });
 
     if (existingElementaryFlow) {
-      return res.status(400).json({
+      return res.json({
         status: "error",
-        message: "A flow with the same domain, path, and name already exists.",
+        message: "A flow with the same backend and path already exists.",
+      });
+    }
+
+    const existingFlowWithSameName = await this.prisma.flow.findFirst({
+      where: {
+        id: { not: id },
+        name: infoflow.name,
+      },
+    });
+
+    if (existingFlowWithSameName) {
+      return res.json({
+        status: "error",
+        message: "A flow with the same name already exists.",
       });
     }
 

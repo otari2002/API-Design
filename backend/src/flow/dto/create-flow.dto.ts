@@ -4,6 +4,7 @@ export class CreateFlowDto {
   infoflow: InfoFlowDTO;
   inputs?: Record<'BODY' | 'HEADER' | 'QUERY', Array<InputDto>>;
   outputs?: Record<'BODY' | 'HEADER', Array<OutputDto>>;
+  subOutputs?: Record<'BODY' | 'HEADER', Array<OutputDto>>;
   subflows?: Array<any>;
 }
 
