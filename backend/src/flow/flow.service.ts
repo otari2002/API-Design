@@ -34,7 +34,7 @@ export class FlowService {
       path,
       ssl
     } = infoflow;
-
+    const isApigeeFlow = instanceApigee === "X" || instanceApigee === "HYBRID";
     const existingFlow = await this.prisma.flow.findFirst({
       where: {
         domain,
@@ -57,18 +57,15 @@ export class FlowService {
         subject,
         description,
         instanceApigee,
-        domain: instanceApigee === "X" || instanceApigee === "HYBRID"
-          ? infoflow.domain : null,
+        domain: isApigeeFlow ? infoflow.domain : null,
         verb,
         path,
-        backendId: instanceApigee === "X" || instanceApigee === "HYBRID"
-          ? null : Number(backendId),
-        ssl: instanceApigee === "X" || instanceApigee === "HYBRID"
-          ? null : ssl,
+        backendId: isApigeeFlow ? null : Number(backendId),
+        ssl: isApigeeFlow ? null : ssl,
       },
     });
 
-    const subflowsToMap = instanceApigee === "X" || instanceApigee === "HYBRID" ?  subflows : []; 
+    const subflowsToMap = isApigeeFlow ?  subflows : []; 
 
     await Promise.all([
       ...inputs["BODY"].map((input) => this.createInput(input, newFlow.id)),
@@ -240,7 +237,7 @@ export class FlowService {
   }
 
   findAll() {
-    return this.prisma.flow.findMany({ include: { backend: true } });
+    return this.prisma.flow.findMany({ include: { backend: true, proxy: true } });
   }
 
   findOne(id: number) {
@@ -329,6 +326,7 @@ export class FlowService {
     }
 
     if (infoflow) {
+      const isApigeeFlow = infoflow.instanceApigee === "X" || infoflow.instanceApigee === "HYBRID";
       await this.prisma.flow.update({
         where: { id },
         data: {
@@ -336,14 +334,11 @@ export class FlowService {
           subject: infoflow.subject,
           description: infoflow.description,
           instanceApigee: infoflow.instanceApigee,
-          domain: infoflow.instanceApigee === "X" || infoflow.instanceApigee === "HYBRID"
-          ? infoflow.domain : null,
+          domain: isApigeeFlow ? infoflow.domain : null,
           verb: infoflow.verb,
           path: infoflow.path,
-          backendId: infoflow.instanceApigee === "X" || infoflow.instanceApigee === "HYBRID"
-            ? null : Number(infoflow.backendId),
-          ssl: infoflow.instanceApigee === "X" || infoflow.instanceApigee === "HYBRID"
-            ? null : infoflow.ssl,
+          backendId: isApigeeFlow ? null : Number(infoflow.backendId),
+          ssl: isApigeeFlow ? null : infoflow.ssl,
         },
       });
     }
